@@ -1,12 +1,13 @@
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))  # Add project root to path
-from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5 import uic
 from generated_ui.main_window import Ui_MainWindow
 from app.import_measurement_tab import ImportMeasurementTab
 from app.select_calibration_tab import SelectCalibrationTab
-
+from app.alignment import AlignmentTab
 
 class MainApp(QMainWindow):
     """Main application class coordinating all tabs."""
@@ -24,6 +25,7 @@ class MainApp(QMainWindow):
         # Initialize tab controllers
         self.import_measurement_tab = ImportMeasurementTab(self.ui, self)
         self.select_calibration_tab = SelectCalibrationTab(self.ui, self)
+        self.alignment_tab = AlignmentTab(self.ui, self)
         
 
 if __name__ == "__main__":
