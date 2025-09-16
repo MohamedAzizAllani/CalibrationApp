@@ -62,6 +62,7 @@ class ImportMeasurementTab:
             self.settings.setValue("last_directory", self.last_directory)
             self.ui.measurementLineEdit.setText(file_path)
             self.import_data(file_path)
+            self.main_window.alignment_tab.reset_data_state()
 
     def import_data(self, path_data):
         """Import XY data from a text file with various delimiters."""
@@ -312,6 +313,7 @@ class ImportMeasurementTab:
     def apply_parameters(self):
         """Apply current parameters and redraw the plot."""
         self.redraw_data_preview()
+        self.main_window.alignment_tab.reset_data_state()
         QMessageBox.information(self.main_window, "Success", "Parameters applied!")
         self.ui.applyParametersButton.setEnabled(False)
 
@@ -352,6 +354,7 @@ class ImportMeasurementTab:
         self.data_is_flipped = state == Qt.Checked
         self.flip_dataset()
         self.redraw_data_preview()
+        self.main_window.alignment_tab.reset_data_state()
         self.ui.applyParametersButton.setEnabled(True)
 
     def keyPressEvent(self, event):

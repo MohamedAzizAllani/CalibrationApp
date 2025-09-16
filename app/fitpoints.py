@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from app.alignment import AlignmentTab
+#from app.alignment import AlignmentTab
 
 class FitpointsTab:
     """Controller for the 'Fitpoints' tab functionality."""

@@ -114,7 +114,7 @@ class AlignmentTab:
             slider_rect_3 = self.ui.minStretch_slider.geometry()
             self.slider_value_label_3.setGeometry(slider_rect_3.x(), slider_rect_3.y() - 20, 50, 20)
             self.ui.minStretch_slider.valueChanged.connect(self.update_minStretch_slider_3_label)
-            print("minStretch_slider configured: range=-20-5, step=1, ticks=5, default=-5")
+            #print("minStretch_slider configured: range=-20-5, step=1, ticks=5, default=-5")
         except AttributeError as e:
             print(f"Error: {e}. Ensure minStretch_slider exists in UI.")
             raise SystemExit(1)
@@ -146,10 +146,14 @@ class AlignmentTab:
             self.ui.start_alignment_button.clicked.connect(self.redraw_rough_plot)
             self.ui.start_alignment_button.clicked.connect(self.redraw_fine_plot)
             self.ui.start_alignment_button.clicked.connect(self.redraw_final_plot)
-
             print("Button signals connected: Import_Calib_button, Import_Data_button, Apply_button")
+            # Set initial button colors
+            self.ui.Import_Calib_button.setStyleSheet("background-color: yellow; color: black;")
+            self.ui.Import_Data_button.setStyleSheet("background-color: yellow; color: black;")
+            self.ui.start_alignment_button.setStyleSheet("background-color: red; color: black;")
+            print("Button colors initialized: Import_Calib_button=yellow, Import_Data_button=yellow, start_alignment_button=red")
         except AttributeError as e:
-            print(f"Error: {e}. Ensure Import_Calib_button, Import_Data_button, and Import_Calib_button_2 exist in UI.")
+            print(f"Error: {e}. Ensure Import_Calib_button, Import_Data_button, and start_alignment_button exist in UI.")
             raise SystemExit(1)
 
         # Connect checkbox
@@ -277,8 +281,9 @@ class AlignmentTab:
         if self.ui.MaxStretch_slider.value() < value:
             self.ui.MaxStretch_slider.setValue(value)
             self.slider_value_label_4.setText(str(value))
-        print(f"minStretch_slider value updated: {value}, MaxStretch_slider min set to {value}")
-
+        self.G_stretch_allowed_window[0] = value  # Update G_stretch_allowed_window
+        print(f"minStretch_slider value updated: {value}, G_stretch_allowed_window={self.G_stretch_allowed_window}")
+    
     def update_MaxStretch_slider_4_label(self, value):
         self.slider_value_label_4.setText(str(value))
         slider = self.ui.MaxStretch_slider
@@ -294,7 +299,8 @@ class AlignmentTab:
         if self.ui.minStretch_slider.value() > value:
             self.ui.minStretch_slider.setValue(value)
             self.slider_value_label_3.setText(str(value))
-        print(f"MaxStretch_slider value updated: {value}, minStretch_slider max set to {value}")
+        self.G_stretch_allowed_window[1] = value  # Update G_stretch_allowed_window
+        print(f"MaxStretch_slider value updated: {value}, G_stretch_allowed_window={self.G_stretch_allowed_window}")
 
     def get_closest_pxl_to_value(self, X, value):
         idx = np.argmin(np.abs(X - value))
@@ -303,24 +309,35 @@ class AlignmentTab:
     def apply_parameters_to_data(self, X, Y, borders, is_flipped):
         """Apply borders and flip parameters to data."""
         print(f"Applying parameters: borders={borders}, is_flipped={is_flipped}")
-        X_out = X.copy()
-        Y_out = Y.copy()
-        if is_flipped:
-            X_out = np.flip(X_out)
-            Y_out = np.flip(Y_out)
-        borders_adjusted = borders.copy()
-        if borders[0] > borders[1]:
-            borders_adjusted = [borders[1], borders[0]]
+    
+        X_out, Y_out = X.copy(), Y.copy()
+    
+        # Apply the passed-in borders first, then flip if necessary
+        borders_adjusted = sorted(borders)  # Ensure ascending order for borders
         print(f"Adjusted borders: {borders_adjusted}")
+    
+        # Find the indices that match the borders
         indices = np.where((X_out >= borders_adjusted[0]) & (X_out <= borders_adjusted[1]))[0]
         if len(indices) == 0:
-            print("PyQt - Warning: No data within borders")
+            print("Warning: No data within borders")
             return X_out, Y_out
-        print(f"Border indices: [{indices[0]}, {indices[-1]}]")
+    
+        # Trim the data to the selected range
         X_out = X_out[indices]
         Y_out = Y_out[indices]
-        print(f"Output X range: {np.min(X_out):.3f} to {np.max(X_out):.3f}, Y min={np.min(Y_out):.3f}, max={np.max(Y_out):.3f}")
+    
+        # Apply flipping *after* trimming the dataset
+        if is_flipped:
+            X_out = X_out[::-1]  # Flip X
+            Y_out = Y_out[::-1]  # Flip Y
+            print(f"Data flipped: X range {np.min(X_out):.3f} to {np.max(X_out):.3f}, Y range {np.min(Y_out):.3f} to {np.max(Y_out):.3f}")
+    
+        print(f"Output X range: {np.min(X_out):.3f} to {np.max(X_out):.3f}, "
+              f"Y min={np.min(Y_out):.3f}, max={np.max(Y_out):.3f}")
+    
         return X_out, Y_out
+
+
     
     def apply_lin_offset(self, X_cal, Y_cal, X_dat, Y_dat, m, t):
         """Apply linear offset to align X_cal and X_dat ranges."""
@@ -373,7 +390,24 @@ class AlignmentTab:
                 Y_cal = Y_cal[::-1]
         
         print(f"After lin offset: X_cal range={np.min(X_cal):.3f} to {np.max(X_cal):.3f}, X_dat range={np.min(X_dat):.3f} to {np.max(X_dat):.3f}")
-        return X_cal, Y_cal, X_dat, Y_dat   
+        return X_cal, Y_cal, X_dat, Y_dat 
+
+    def reset_calibration_state(self):
+        """Reset calibration import state and update button colors."""
+        self.cal_imported = False
+        self.new_cal_data_available = True
+        self.ui.Import_Calib_button.setStyleSheet("background-color: yellow; color: black")
+        self.ui.start_alignment_button.setStyleSheet("background-color: red; color: black;")
+        print("Import_Calib_button set to yellow due to new calibration sample selection")
+        self.update_start_alignment_button()  
+
+    def reset_data_state(self):
+        """Reset measurement import state and update button colors."""
+        self.data_imported = False
+        self.new_meas_data_available = True
+        self.ui.Import_Data_button.setStyleSheet("background-color: yellow; color: black")
+        print("Import_Data_button set to yellow due to new measurement file selection")
+        self.update_start_alignment_button() 
 
     def Main_plot_function(self, fig, X, Y, is_flipped, borders, Plot_type="line", **kwargs):
         """Plot data on the given figure."""
@@ -446,19 +480,32 @@ class AlignmentTab:
     
     def update_start_alignment_button(self):
         """Update start_alignment_button color based on import states."""
-        if self.new_cal_data_available or self.new_meas_data_available or not self.cal_imported or not self.data_imported:
-            self.ui.start_alignment_button.setStyleSheet("background-color: red; color: black")
-            print("start_alignment_button set to red: new_cal_data_available=%s, new_meas_data_available=%s, cal_imported=%s, data_imported=%s" % 
-                  (self.new_cal_data_available, self.new_meas_data_available, self.cal_imported, self.data_imported))
+        if self.cal_imported and self.data_imported and not self.new_cal_data_available and not self.new_meas_data_available:
+            self.ui.start_alignment_button.setStyleSheet("background-color: yellow; color: black")
+            print("start_alignment_button set to yellow: cal_imported=True, data_imported=True")
         else:
+            self.ui.start_alignment_button.setStyleSheet("background-color: red; color: white")
+            print("start_alignment_button set to red: cal_imported=%s, data_imported=%s, new_cal_data_available=%s, new_meas_data_available=%s" % 
+                  (self.cal_imported, self.data_imported, self.new_cal_data_available, self.new_meas_data_available))
+
+    def start_alignment_clicked(self):
+        """Handle start_alignment_button click to set it to green and trigger redraws."""
+        if self.cal_imported and self.data_imported and not self.new_cal_data_available and not self.new_meas_data_available:
             self.ui.start_alignment_button.setStyleSheet("background-color: green; color: black")
-            print("start_alignment_button set to green")
+            print("start_alignment_button set to green after click")
+            self.redraw_rough_plot()
+            self.redraw_fine_plot()
+            self.redraw_final_plot()
+        else:
+            print("Error: Cannot start alignment, imports not completed")
+            QMessageBox.critical(self.main_window, "Error", 
+                                 "First import data with buttons above. Red: This step is missing previous steps. Yellow: This step is ready. Green: This step has been done")
 
     def import_calibration(self):
         print("Import_Calib_button clicked")
         select_tab = self.main_window.select_calibration_tab
         if select_tab.X_data.size > 1:
-            self.X_c = select_tab.X_data.copy() * 1e-6  # µm to mm
+            self.X_c = select_tab.X_data_range.copy() * 1e-6  # µm to mm
             self.Y_c = select_tab.Y_data.copy()
             self.cal_is_flipped = select_tab.data_is_flipped
             self.borders_cal = [x * 1e-6 for x in select_tab.borders_data]  # Convert borders to mm
@@ -476,29 +523,36 @@ class AlignmentTab:
     def import_data(self):
         print("Import_Data_button clicked")
         try:
-            meas_tab = self.main_window.import_measurement_tab
-            if hasattr(meas_tab, 'X_data') and meas_tab.X_data.size > 1:
-                print(f"Raw meas_tab.X_data: min={np.min(meas_tab.X_data):.3f}, max={np.max(meas_tab.X_data):.3f}")
-                self.X_data = meas_tab.X_data.copy() * 1e6  # nm to µm
-                self.X_data = self.X_data - self.X_data[0]  # Normalize
-                self.X_data = self.X_data * 1e-6  # µm to mm
-                self.Y_data = meas_tab.Y_data.copy()
-                self.borders_data = [0, np.max(self.X_data)]  # Borders in mm
-                self.data_is_flipped = meas_tab.data_is_flipped if hasattr(meas_tab, 'data_is_flipped') else False
-                self.data_imported = True
-                self.new_meas_data_available = False
-                print(f"Measurement data imported: X_data min={np.min(self.X_data):.3f}, max={np.max(self.X_data):.3f}, Y_data min={np.nanmin(self.Y_data):.3f}, max={np.nanmax(self.Y_data):.3f}, borders_data={self.borders_data}")
-                self.ui.Import_Data_button.setStyleSheet("background-color: green; color: black")
-                self.redraw_alignment_preview()
-                self.update_start_alignment_button()
-            else:
-                print("Error: No measurement data available")
-                self.ui.Import_Data_button.setStyleSheet("background-color: red; color: black")
-                QMessageBox.critical(self.main_window, "Error", "No data found. Import data in the Measurement tab.")
+            meas_tab = self.main_window.import_measurement_tab  # Access the Import Measurement tab
+    
+            # Fetch the current state of data, flipped, and borders from the Measurement tab
+            self.X_data = meas_tab.X_data_range.copy() * 1e6  # nm to µm
+            self.X_data = (self.X_data - self.X_data[0]) * 1e-6  # Normalize and convert to mm
+            self.Y_data = meas_tab.Y_data.copy()
+            self.borders_data = meas_tab.borders_data.copy()  # Include borders from measurement tab
+            self.data_is_flipped = meas_tab.data_is_flipped  # Retrieve flipped state
+             
+            # Debugging Information
+            print(f"Updated X_data: {self.X_data}")
+            print(f"Updated Y_data: {self.Y_data}")
+            print(f"Updated Borders: {self.borders_data}")
+            print(f"Data Flipped: {self.data_is_flipped}")
+    
+            # Mark data as imported and update UI
+            self.data_imported = True
+            self.ui.Import_Data_button.setStyleSheet("background-color: green; color: black")
+            self.new_meas_data_available = False
+            # Redraw alignment preview after applying parameters
+            self.redraw_alignment_preview()
+            self.update_start_alignment_button()
+    
         except AttributeError as e:
             print(f"Error: {e}. Ensure import_measurement_tab exists.")
             self.ui.Import_Data_button.setStyleSheet("background-color: red; color: black")
-            QMessageBox.critical(self.main_window, "Error", "Measurement tab not found.")
+            QMessageBox.critical(
+                self.main_window, "Error", "Measurement tab not found. Aborting import."
+            )
+        
     
     def load_data(self, path_data):
         """Load measurement data from a text file (fallback method)."""
@@ -554,6 +608,7 @@ class AlignmentTab:
                 self.figure_preview, self.X_data, self.Y_data, self.data_is_flipped, self.borders_data, color='blue', label='Measurement'
             )
             print(f"Measurement plotted: is_flipped={self.data_is_flipped}, X_data range={np.min(X_data):.3f} to {np.max(X_data):.3f}")
+            print(f"Measurement data for plotting: X range {np.min(X_data):.3f} to {np.max(X_data):.3f}, Y range: {np.min(Y_data):.3f} to {np.max(Y_data):.3f}")
             self.draw_ylabel(Quantity="Data", is_log=True)
             ax2.yaxis.label.set_color('blue')
             ax2.tick_params(axis='y', colors='blue')
@@ -564,7 +619,8 @@ class AlignmentTab:
             x_max = max(np.max(self.X_c) if self.cal_imported else -np.inf, np.max(self.X_data) if self.data_imported else -np.inf)
             ax.set_xlim(x_min - 0.5, x_max)
             print(f"X-axis limits: {ax.get_xlim()}")
-    
+        
+        
         self.figure_preview.tight_layout()
         self.canvas_preview.draw_idle()
         print("Preview plot drawn")
@@ -840,7 +896,7 @@ class AlignmentTab:
             ax.scatter(self.ref(X_cal), Y_cal, color="blue", alpha=0.25, label="Datapoints")
             self.draw_xlabel(Quantity="Data", is_log=False)
             self.draw_ylabel(Quantity="Calibration", is_log=False)
-            self.draw_grid()
+            #self.draw_grid()
             ax.scatter(Y_plateaus_dat, Y_plateaus_cal, color="red", alpha=1, label="Plateau points")
             handles, labels = ax.get_legend_handles_labels()
             ax.legend(handles, labels, loc="best", fontsize=10)
@@ -889,6 +945,13 @@ class AlignmentTab:
             self.ui.label_20.setText(f"{quals[i]:.2f}")
         except AttributeError as e:
             print(f"Error: {e}. Ensure get_stretch_in_percentage, get_shift_in_nm, and label_20 exist in UI.")
+        
+        # Add grid to the fine plot axes
+        ax = self.figure_fine.gca()
+        ax.grid(color='b', which='minor', ls='-.', lw=0.25)
+        ax.grid(color='b', which='major', ls='-.', lw=0.5)
+        print("Grid drawn on fine plot")
+        
         self.canvas_fine.draw_idle()
         print("Fine plot drawn")
         self.redraw_final_plot()
@@ -964,10 +1027,9 @@ class AlignmentTab:
         ax.tick_params(axis='y', colors='red')
         ax.set_ylim([np.max(Y_cal) - 1.05 * (np.max(Y_cal) - np.min(Y_cal)), np.max(Y_cal) * 1.05])
         ax.set_xlabel("Depth [mm]")
-        ax.grid(color='b', which='major', ls='-.', lw=0.5)
-        ax.grid(color='b', which='minor', ls='-.', lw=0.25)
+        #ax.grid(color='b', which='major', ls='-.', lw=0.5)
+        #ax.grid(color='b', which='minor', ls='-.', lw=0.25)
         ax.legend(loc='upper left')
-        
         ax2 = ax.twinx()
         ax2.plot(X_dat, Y_dat, color='blue', label='Measurement')
         ax2.set_ylabel("Measurement Data")

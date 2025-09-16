@@ -1815,12 +1815,13 @@ class SelectCalibrationTab:
         self.ui.leftBorderSlider_2.valueChanged.connect(self.change_left_border)
         self.ui.rightBorderSlider_2.valueChanged.connect(self.change_right_border)
         self.ui.Nb_steps_spinBox.valueChanged.connect(self.update_number_of_steps)
-        self.ui.Min_Step_LineEdit.textChanged.connect(self.update_step_distance)
+        self.ui.Min_Step_LineEdit.textEdited.connect(self.update_step_distance)
         self.ui.apply_parameters_calib_tab_Button.clicked.connect(self.apply_parameters)
         self.ui.Dopant_Type_comboBox.currentTextChanged.connect(self.update_dopant_type)  # New connection
-    
+        
+        
         # Initialize UI
-        self.update_calibration_sample("pcal")
+        #self.update_calibration_sample("pcal")
 
     def browse_calibration_file(self):
         """Open file dialog to select a calibration file."""
@@ -1960,15 +1961,18 @@ class SelectCalibrationTab:
         self.ui.Nb_steps_spinBox.setValue(self.G_number_of_steps)  # Update spin box
         self.ui.Min_Step_LineEdit.setText(str(self.G_step_distance))  # Update line edit
         self.redraw_data_preview()
+        self.main_window.alignment_tab.reset_calibration_state()
 
     
     def update_preset_from_combo(self, preset_name):
         """Wrapper to pass sample and preset_name to update_preset."""
         sample = self.ui.calib_sample_combobox.currentText()
+        self.main_window.alignment_tab.reset_calibration_state()
         self.update_preset(sample, preset_name)
+        
     
     def update_preset(self, sample, preset_name):
-        """Load preset settings and data."""
+        """Load preset settings and data, updating stretch sliders in AlignmentTab."""
         if sample not in preset_lib or preset_name not in preset_lib[sample]:
             return
         preset = preset_lib[sample][preset_name]
@@ -2007,10 +2011,19 @@ class SelectCalibrationTab:
         )
         self.ui.Calib_Data_Denom_lineEdit.setVisible(self.G_cal_setting == 3)
         self.ui.RawData_LinearScale_checkBox.setChecked(self.scale_cal_data)
-        self.ui.Dopant_Type_comboBox.setCurrentText(self.G_carrier_type)  # Update combo box
-        self.ui.Dopant_type_label.setText("p-type" if self.G_carrier_type == "B" else "n-type")  # Update label
+        self.ui.Dopant_Type_comboBox.setCurrentText(self.G_carrier_type)
+        self.ui.Dopant_type_label.setText("p-type" if self.G_carrier_type == "B" else "n-type")
         self.ui.Nb_steps_spinBox.setValue(self.G_number_of_steps)
         self.ui.Min_Step_LineEdit.setText(str(self.G_step_distance))
+        # Update stretch sliders in AlignmentTab
+        try:
+            stretch_values = preset["-stretch-"]
+            alignment_tab = self.main_window.alignment_tab
+            alignment_tab.ui.minStretch_slider.setValue(int(stretch_values[0]))
+            alignment_tab.ui.MaxStretch_slider.setValue(int(stretch_values[1]))
+            print(f"Stretch sliders updated: min={stretch_values[0]}, max={stretch_values[1]}")
+        except AttributeError as e:
+            print(f"Error updating stretch sliders: {e}. Ensure main_window.alignment_tab exists.")
         self.reset_data_window()
         self.redraw_data_preview()
         self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
@@ -2067,48 +2080,51 @@ class SelectCalibrationTab:
             label.setGeometry(x_offset - 30, label.y(), 60, 20)
 
     def change_left_border(self, value):
-        """Update left border based on slider value and ensure valid range."""
+        """Update left border based on slider value in steps of 0.01."""
         if self.X_data.size > 0:
             min_val = min(self.X_data)
-            max_val = max(self.X_data)
-            self.borders_data[0] = max(min_val, min(value * self.slider_scale_factor, max_val))
+    
+            # Map slider value to dataset range
+            left_border = min_val + value * 0.01
+    
+            # Apply updated left border
+            self.borders_data[0] = left_border
             if not self.data_is_flipped:
                 self.original_borders_data[0] = self.borders_data[0]
+    
+            # Update labels
             self.ui.rightMinLabel_2.setText(f"{self.borders_data[0] * 1e-6:.3f} mm")
-            self.ui.rightBorderSlider_2.setMinimum(int(self.borders_data[0] / self.slider_scale_factor))
-            if self.borders_data[1] < self.borders_data[0]:
-                self.borders_data[1] = self.borders_data[0]
-                if not self.data_is_flipped:
-                    self.original_borders_data[1] = self.borders_data[1]
-                self.ui.rightBorderSlider_2.setValue(int(self.borders_data[1] / self.slider_scale_factor))
-                self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1] * 1e-6:.3f}")
-            self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0] * 1e-6:.3f}")
+            self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0] * 1e-6:.2f}")
             self.update_slider_label_position(self.ui.leftBorderSlider_2, self.ui.leftSliderValueLabel_2, value)
-            self.update_slider_label_position(self.ui.rightBorderSlider_2, self.ui.rightSliderValueLabel_2, int(self.borders_data[1] / self.slider_scale_factor))
+    
+            # Enable the apply parameters button
             self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
-            self.redraw_data_preview()
+    
 
+    
     def change_right_border(self, value):
-        """Update right border based on slider value and ensure valid range."""
+        """Update right border based on slider value in steps of 0.01."""
         if self.X_data.size > 0:
             min_val = min(self.X_data)
-            max_val = max(self.X_data)
-            self.borders_data[1] = max(min_val, min(value * self.slider_scale_factor, max_val))
+    
+            # Map slider value to dataset range
+            right_border = min_val + value * 0.01
+    
+            # Apply updated right border
+            self.borders_data[1] = right_border
             if not self.data_is_flipped:
                 self.original_borders_data[1] = self.borders_data[1]
+    
+            # Update labels
             self.ui.leftMaxLabel_2.setText(f"{self.borders_data[1] * 1e-6:.3f} mm")
-            self.ui.leftBorderSlider_2.setMaximum(int(self.borders_data[1] / self.slider_scale_factor))
-            if self.borders_data[0] > self.borders_data[1]:
-                self.borders_data[0] = self.borders_data[1]
-                if not self.data_is_flipped:
-                    self.original_borders_data[0] = self.borders_data[0]
-                self.ui.leftBorderSlider_2.setValue(int(self.borders_data[0] / self.slider_scale_factor))
-                self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0] * 1e-6:.3f}")
-            self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1] * 1e-6:.3f}")
+            self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1] * 1e-6:.2f}")
             self.update_slider_label_position(self.ui.rightBorderSlider_2, self.ui.rightSliderValueLabel_2, value)
-            self.update_slider_label_position(self.ui.leftBorderSlider_2, self.ui.leftSliderValueLabel_2, int(self.borders_data[0] / self.slider_scale_factor))
+    
+            # Enable the apply parameters button
             self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
-            self.redraw_data_preview()
+    
+    
+            
     
     def update_number_of_steps(self, value):
         """Update G_number_of_steps from Nb_steps_spinBox and enable apply button."""
@@ -2117,95 +2133,85 @@ class SelectCalibrationTab:
         self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
 
     def update_step_distance(self, text):
-        """Update G_step_distance from Min_Step_LineEdit and enable apply button."""
-        try:
-            step_distance = float(text)
-            if step_distance <= 0:
-                raise ValueError("Step distance must be positive")
-            self.G_step_distance = step_distance
-            self.ui.Min_Step_LineEdit.setText(str(step_distance))
-        except (ValueError, TypeError):
-            self.G_step_distance = 0.3  # Default
-            self.ui.Min_Step_LineEdit.setText("0.3")
-        print(f"Step distance updated: {self.G_step_distance}")
+        """Update G_step_distance from Min_Step_LineEdit for valid input."""
+        if text.strip():  # Only process non-empty input
+            try:
+                step_distance = float(text)
+                if step_distance > 0:
+                    self.G_step_distance = step_distance
+                    print(f"Step distance updated: {self.G_step_distance}")
+                else:
+                    print(f"Negative step distance input: {text}, keeping previous value: {self.G_step_distance}")
+            except (ValueError, TypeError):
+                print(f"Invalid step distance input: {text}, keeping previous value: {self.G_step_distance}")
+        else:
+            print(f"Empty step distance input, keeping previous value: {self.G_step_distance}")
         self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
 
     def reset_data_window(self):
-        """Reset sliders, labels, and UI elements to initial data state."""
+        """Reset sliders to fixed steps of 0.01."""
         if self.X_data.size > 0:
-            max_slider_value = 1000
             min_val = min(self.X_data)
             max_val = max(self.X_data)
-            self.slider_scale_factor = max(max_val, 1) / max_slider_value
+    
+            # Total slider steps for 0.01 increments
+            slider_steps = int((max_val - min_val) / 0.01)
+    
+            # Configure left border slider
             self.ui.leftBorderSlider_2.setMinimum(0)
-            self.ui.leftBorderSlider_2.setMaximum(max_slider_value)
-            self.ui.leftBorderSlider_2.setSingleStep(1)
-            self.ui.leftBorderSlider_2.setPageStep(1)
-            self.ui.leftBorderSlider_2.setValue(int(self.borders_data[0] / self.slider_scale_factor))
-            self.ui.leftBorderSlider_2.setTickPosition(QSlider.TicksBothSides)
-            self.ui.leftBorderSlider_2.setTickInterval(max_slider_value // 10)
+            self.ui.leftBorderSlider_2.setMaximum(slider_steps)
+            self.ui.leftBorderSlider_2.setSingleStep(1)  # Each step corresponds to 0.01 in the dataset
+            self.ui.leftBorderSlider_2.setPageStep(10)
+            self.ui.leftBorderSlider_2.setValue(int((self.borders_data[0] - min_val) / 0.01))
+            #self.ui.leftBorderSlider_2.setTickPosition(QSlider.TicksBothSides)
+            #self.ui.leftBorderSlider_2.setTickInterval(slider_steps // 10)
+    
+            # Configure right border slider
             self.ui.rightBorderSlider_2.setMinimum(0)
-            self.ui.rightBorderSlider_2.setMaximum(max_slider_value)
-            self.ui.rightBorderSlider_2.setSingleStep(1)
-            self.ui.rightBorderSlider_2.setPageStep(1)
-            self.ui.rightBorderSlider_2.setValue(int(self.borders_data[1] / self.slider_scale_factor))
-            self.ui.rightBorderSlider_2.setTickPosition(QSlider.TicksBothSides)
-            self.ui.rightBorderSlider_2.setTickInterval(max_slider_value // 10)
-            self.ui.leftBorderSlider_2.setStyleSheet("""
-                QSlider::groove:horizontal {
-                    border: 1px solid #999999;
-                    height: 8px;
-                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #B0C4DE, stop:1 #B0C4DE);
-                    margin: 2px 0;
-                }
-                QSlider::handle:horizontal {
-                    background: #4682B4;
-                    border: 1px solid #2F4F4F;
-                    width: 18px;
-                    margin: -2px 0;
-                    border-radius: 3px;
-                }
-            """)
-            self.ui.rightBorderSlider_2.setStyleSheet("""
-                QSlider::groove:horizontal {
-                    border: 1px solid #999999;
-                    height: 8px;
-                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #FFB6C1, stop:1 #FFB6C1);
-                    margin: 2px 0;
-                }
-                QSlider::handle:horizontal {
-                    background: #DC143C;
-                    border: 1px solid #2F4F4F;
-                    width: 18px;
-                    margin: -2px 0;
-                    border-radius: 3px;
-                }
-            """)
-            self.ui.leftMinLabel_2.setText(f"{min(self.X_data) * 1e-6:.3f} mm")
-            self.ui.leftMaxLabel_2.setText(f"{self.borders_data[1] * 1e-6:.3f} mm")
-            self.ui.rightMinLabel_2.setText(f"{self.borders_data[0] * 1e-6:.3f} mm")
-            self.ui.rightMaxLabel_2.setText(f"{max(self.X_data) * 1e-6:.3f} mm")
-            self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0] * 1e-6:.3f}")
-            self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1] * 1e-6:.3f}")
-            self.update_slider_label_position(self.ui.leftBorderSlider_2, self.ui.leftSliderValueLabel_2, int(self.borders_data[0] / self.slider_scale_factor))
-            self.ui.Flip_Data_Checkbox.setChecked(self.data_is_flipped)
-            self.ui.RawData_LinearScale_checkBox.setChecked(self.scale_cal_data)
+            self.ui.rightBorderSlider_2.setMaximum(slider_steps)
+            self.ui.rightBorderSlider_2.setSingleStep(1)  # Each step corresponds to 0.01 in the dataset
+            self.ui.rightBorderSlider_2.setPageStep(10)
+            self.ui.rightBorderSlider_2.setValue(int((self.borders_data[1] - min_val) / 0.01))
+            #self.ui.rightBorderSlider_2.setTickPosition(QSlider.TicksBothSides)
+            #self.ui.rightBorderSlider_2.setTickInterval(slider_steps // 10)
+    
+            # Update labels
+            self.ui.leftMinLabel_2.setText(f"{min_val * 1e-6:.3f} mm")
+            self.ui.leftMaxLabel_2.setText(f"{max_val * 1e-6:.3f} mm")
+            self.ui.rightMinLabel_2.setText(f"{min_val * 1e-6:.3f} mm")
+            self.ui.rightMaxLabel_2.setText(f"{max_val * 1e-6:.3f} mm")
+            self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0] * 1e-6:.2f}")
+            self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1] * 1e-6:.2f}")
+    
+            # Set slider positions
+            self.update_slider_label_position(self.ui.leftBorderSlider_2, self.ui.leftSliderValueLabel_2, int((self.borders_data[0] - min_val) / 0.01))
+            self.update_slider_label_position(self.ui.rightBorderSlider_2, self.ui.rightSliderValueLabel_2, int((self.borders_data[1] - min_val) / 0.01))
+    
+    
+
 
     def flip_dataset(self):
         """Flip the dataset and update borders, sliders, and labels."""
         if self.X_data.size > 0:
-            max_x = max(self.X_data)
-            min_x = min(self.X_data)
+            max_x = max(self.X_data)  # Maximum X value
+            min_x = min(self.X_data)  # Minimum X value
+    
             if self.data_is_flipped:
-                self.X_data_range = max_x - (self.X_data - min_x)
+                # Flip the dataset
+                self.X_data_range = max_x - (self.X_data - min_x)  # Reverse X axis
                 left_border = max_x - (self.original_borders_data[0] - min_x)
                 right_border = max_x - (self.original_borders_data[1] - min_x)
+                # Update borders based on flipped state
                 self.borders_data = [min(left_border, right_border), max(left_border, right_border)]
             else:
+                # Restore dataset to original state (unflipped)
                 self.X_data_range = self.X_data.copy()
                 self.borders_data = self.original_borders_data.copy()
-            self.reset_data_window()
-            self.redraw_data_preview()
+    
+            # Update sliders and plot
+            self.reset_data_window()  # Adjust sliders and their ranges
+            self.redraw_data_preview()  # Update the plot
+    
 
     def flip_data(self, state):
         """Handle flip checkbox state change and update plot."""
@@ -2213,6 +2219,7 @@ class SelectCalibrationTab:
         self.flip_dataset()
         self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
         self.redraw_data_preview()
+        self.main_window.alignment_tab.reset_calibration_state()
 
     
 
@@ -2235,125 +2242,167 @@ class SelectCalibrationTab:
         step_dist = self.G_step_distance
         step_num = self.G_number_of_steps
         x_interval = np.abs(X[-1] - X[0])
+    
         if x_interval == 0:
             print("Error: X range is zero, cannot compute steps")
             return None
-        step_distance_pxls = int(step_dist / x_interval * X.size)
-        if step_distance_pxls < 1:
-            step_distance_pxls = 1
     
-        print("Input X range:", np.min(X), np.max(X))
-        print("Y range:", np.min(Y), np.max(Y))
+        # Calculate required point spacing for peaks
+        step_distance_pxls = max(int(step_dist / x_interval * X.size), 1)
     
+        # Smooth and differentiate the data for peak finding
         test_data = self.differentiate_for_peak_finding(Y, filterwidth=fixed_filterwidth)
         print("test_data max:", np.max(test_data))
     
-        peaks = find_peaks(test_data, distance=step_distance_pxls, height=1)
-        peak_pos_pxls = list(peaks[0])
-        peak_height = list(peaks[1]['peak_heights'])
+        # Detect peaks in the differentiated data
+        peaks, properties = find_peaks(test_data, distance=step_distance_pxls, height=np.percentile(test_data, 10))
+        peak_pos_pxls = list(peaks)
+        peak_height = list(properties["peak_heights"])
     
-        if len(peak_pos_pxls) < (step_num - 1):
-            print("Warning: Too few peaks found, using fallback step positions")
-            total_width = min(x_interval, step_dist * step_num)
-            start = X[0] + step_dist / 2
-            end = X[0] + total_width - step_dist / 2
-            peak_pos = np.linspace(start, end, step_num - 1)
+        # Enforce step count (required number of steps = step_num - 1)
+        while len(peak_pos_pxls) > (step_num - 1):
+            smallest_peak = peak_height.index(min(peak_height))
+            del peak_height[smallest_peak]
+            del peak_pos_pxls[smallest_peak]
+    
+        return X[peak_pos_pxls]
+    
+
+    def get_closest_pxl_to_value(arr,val):
+        diff = np.abs(val-arr)
+        min = np.min(diff)
+        return np.where(diff==min)
+    
+    def apply_parameters_to_data(self, X, Y, borders, is_flipped):
+        """Apply borders and optionally flip the dataset for downstream processing."""
+        print(f"Applying parameters: borders={borders}, is_flipped={is_flipped}")
+    
+        # Select the flipped or unflipped dataset
+        X_out, Y_out = X.copy(), Y.copy()
+    
+        # Ensure the flipped dataset is used
+        if is_flipped:
+            print(f"Using flipped data: X range {np.min(self.X_data_range):.3f} to {np.max(self.X_data_range):.3f}")
+            X_out = self.X_data_range  # Use already flipped dataset
         else:
-            while len(peak_pos_pxls) > (step_num - 1):
-                smallest_peak = peak_height.index(min(peak_height))
-                del peak_height[smallest_peak]
-                del peak_pos_pxls[smallest_peak]
-            peak_pos = X[peak_pos_pxls]
-        
-        print("Transition positions:", peak_pos)
-        return peak_pos
+            X_out = X  # Use the original dataset
+    
+        # Apply borders to trim the dataset
+        borders_adjusted = sorted(borders)  # Ensure valid borders
+        print(f"Adjusted borders: {borders_adjusted}")
+    
+        indices = np.where((X_out >= borders_adjusted[0]) & (X_out <= borders_adjusted[1]))[0]
+        if len(indices) == 0:
+            print("Warning: No data within borders")
+            return X_out, Y_out  # Return untrimmed dataset for visualization
+    
+        # Apply borders to trim the dataset
+        X_out, Y_out = X_out[indices], Y_out[indices]
+        print(f"Trimmed Data: X range {np.min(X_out):.3f} to {np.max(X_out):.3f}, "
+              f"Y range {np.min(Y_out):.3f} to {np.max(Y_out):.3f}")
+    
+        return X_out, Y_out
+    
+
+
+    
 
     def estimate_plateaus(self, X, Y, ax, plot_plateau=True, variable_set="Alignment"):
         """Estimate plateau positions for red bars."""
         step_dist = self.G_step_distance
-        print("Step distance:", step_dist)
         step_pos = self.find_step_pos(X, Y, "automatic Mode", fixed_filterwidth=0, variable_set=variable_set)
         if step_pos is None:
             print("Error: Could not find all required steps!")
             return None, None
-        x_0 = X[0]
-        x_f = X[-1]
-        estimate_plateaus_pos = [(x_0 + step_pos[0]) / 2]
+    
+        # Recalculate plateau positions
+        estimate_plateaus_pos = [(X[0] + step_pos[0]) / 2]
         for i in range(len(step_pos) - 1):
             estimate_plateaus_pos.append((step_pos[i] + step_pos[i + 1]) / 2)
-        estimate_plateaus_pos.append((step_pos[-1] + x_f) / 2)
+        estimate_plateaus_pos.append((step_pos[-1] + X[-1]) / 2)
+    
+        # Draw bars for plateaus
         if plot_plateau:
             y_min, y_max = ax.get_ylim()
-            print("Y limits for bars:", y_min, y_max)
-            if np.any(np.isnan(Y)):
-                print("Warning: Y_data contains NaN values")
-            ax.bar(estimate_plateaus_pos, y_max - y_min, bottom=y_min,
-                   alpha=0.25, width=step_dist, color='r', edgecolor='k')
-        print("Plateau positions:", estimate_plateaus_pos)
+            bar_heights = y_max - y_min
+            ax.bar(
+                estimate_plateaus_pos,
+                bar_heights,
+                bottom=y_min,
+                alpha=0.25,
+                width=step_dist,
+                color="r",
+                edgecolor="k"
+            )
+            #print(f"Plateau positions: {estimate_plateaus_pos}")
+            print(f" step_pos={step_pos}")
         return estimate_plateaus_pos, step_pos
+
+
     
     def apply_parameters(self):
-        """Apply current parameters, update steps and distance, and redraw plot."""
+        """Apply parameters only if step distance is valid, else show error."""
+        text = self.ui.Min_Step_LineEdit.text().strip()
+        if not text:
+            QMessageBox.critical(self.main_window, "Error", "Missing step distance input. Please enter a valid number.")
+            print("Apply failed: Missing step distance")
+            return
+        try:
+            step_distance = float(text)
+            if step_distance <= 0:
+                QMessageBox.critical(self.main_window, "Error", "Step distance must be positive. Please enter a valid number.")
+                print(f"Apply failed: Negative step distance: {step_distance}")
+                return
+        except (ValueError, TypeError):
+            QMessageBox.critical(self.main_window, "Error", "Invalid step distance input. Please enter a valid number.")
+            print(f"Apply failed: Invalid step distance: {text}")
+            return
         self.update_number_of_steps(self.ui.Nb_steps_spinBox.value())
         self.update_step_distance(self.ui.Min_Step_LineEdit.text())
         self.redraw_data_preview()
         QMessageBox.information(self.main_window, "Success", "Parameters applied!")
         self.ui.apply_parameters_calib_tab_Button.setEnabled(False)
+        self.main_window.alignment_tab.reset_calibration_state()
     
     def redraw_data_preview(self):
         """Redraw the data preview plot with borders, flip state, grid, and red bars."""
         self.figure.clear()
         print("Canvas size:", self.canvas.size().width(), self.canvas.size().height())
         ax = self.figure.add_subplot(111)
+    
+        # Ensure trimming and flipping are respected
         if self.X_data.size > 1:
-            x_scale = 1e-6  # Convert µm to mm
-            min_val = min(self.X_data)
-            max_val = max(self.X_data)
-            left_border = max(min_val, min(self.borders_data[0], max_val))
-            right_border = max(min_val, min(self.borders_data[1], max_val))
-            if left_border > right_border:
-                left_border, right_border = right_border, left_border
-            mask = (self.X_data_range >= left_border) & (self.X_data_range <= right_border)
-            if mask.any():
-                indices = np.where(mask)[0]
-                X_plot = self.X_data_range[indices] * x_scale
-                ax.plot(X_plot, self.Y_data[indices], label='Calibration', color='green')
-                ax.legend()
-                y_visible = self.Y_data[indices]
-                if y_visible.size > 1:
-                    y_min, y_max = np.nanmin(y_visible), np.nanmax(y_visible)
-                    if y_min == y_max:
-                        y_min -= 0.1 * abs(y_min) or 0.1
-                        y_max += 0.1 * abs(y_max) or 0.1
-                    y_range = y_max - y_min
-                    y_mid = (y_max + y_min) / 2
-                    ax.set_ylim(y_mid - (y_range / 2) * 1.03, y_mid + (y_range / 2) * 1.03)
-                else:
-                    ax.set_ylim(np.nanmin(self.Y_data), np.nanmax(self.Y_data))
-                self.estimate_plateaus(self.X_data_range * x_scale, self.Y_data, ax, plot_plateau=True, variable_set="Alignment")
-            left_margin = 0.5  # Fixed margin in mm
-            ax.set_xlim(left_border * x_scale - left_margin, right_border * x_scale)
+            # Apply trimming via borders and optionally flip the dataset
+            X_trimmed, Y_trimmed = self.apply_parameters_to_data(
+                self.X_data, self.Y_data, self.borders_data, self.data_is_flipped
+            )
+            
+            # Plot the trimmed/processed data
+            ax.plot(X_trimmed * 1e-6 , Y_trimmed, label="Calibration", color="green")
+            ax.legend()
+    
+            # Detect and plot plateaus using the trimmed/processed data
+            self.estimate_plateaus(
+                X_trimmed * 1e-6, Y_trimmed, ax, plot_plateau=True, variable_set="Alignment"
+            )
+    
+            # Update axis limits dynamically
+            y_min = np.nanmin(Y_trimmed)
+            y_max = np.nanmax(Y_trimmed)
+            y_range = y_max - y_min
+            y_mid = (y_max + y_min) / 2
+            ax.set_ylim(y_mid - (y_range / 2) * 1.03, y_mid + (y_range / 2) * 1.03)
+            ax.set_xlim(self.borders_data[0] * 1e-6, self.borders_data[1] * 1e-6)
             print("X-axis limits:", ax.get_xlim())
-            ax.set_xlabel('Depth [mm]')
-            if self.G_cal_setting == 1:
-                label = f"{self.G_carrier_type} charge carrier concentration"
-                unit = "cm$^{-3}$"
-                if not self.scale_cal_data:
-                    label += f" [$log_{{10}}$({unit})]"
-                else:
-                    label += f" [{unit}]"
-            elif self.G_cal_setting == 2:
-                label = "SRP measured resistivity ρ"
-                unit = 'Ωcm'
-                if not self.scale_cal_data:
-                    label += f" [$log_{{10}}$({unit})]"
-                else:
-                    label += f" [{unit}]"
-            else:
-                label = self.denomination
-            ax.set_ylabel(label, fontsize=10)
-            ax.tick_params(axis='both', which='major', labelsize=10)
-            ax.tick_params(axis='both', which='minor', labelsize=10)
-            ax.grid(color='b', which='minor', ls='-.', lw=0.25)
-            ax.grid(color='b', which='major', ls='-.', lw=0.5)
-            self.canvas.draw() 
+    
+            # Label the axes
+            ax.set_xlabel("Depth [mm]")
+            ax.set_ylabel(
+                f"{self.G_carrier_type} Density [$log_{{10}}$(cm$^{{-3}}$)]"
+                if self.G_cal_setting == 1 else "Resistivity [$Ω⋅cm$]"
+            )
+            ax.grid(True)
+    
+        # Draw the updated canvas
+        self.canvas.draw_idle()
+    
