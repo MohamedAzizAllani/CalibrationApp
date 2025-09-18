@@ -23,7 +23,7 @@ class AlignmentTab:
         self.new_meas_data_available = False
         self.new_cal_data_available = False
         self.new_meas_data_available = False
-        print("Initialized new_cal_data_available=False, new_meas_data_available=False")
+       #print("Initialized new_cal_data_available=False, new_meas_data_available=False")
         self.G_step_distance = 0.3
 
         # Global settings
@@ -74,7 +74,7 @@ class AlignmentTab:
             slider_rect = self.ui.DataFilterStrenght_slider.geometry()
             self.slider_value_label.setGeometry(slider_rect.x(), slider_rect.y() - 20, 50, 20)
             self.ui.DataFilterStrenght_slider.valueChanged.connect(self.update_DataFilterStrenght_slider_label)
-            print("DataFilterStrenght_slider configured: range=0-24, step=1, ticks=2, default=3")
+           #print("DataFilterStrenght_slider configured: range=0-24, step=1, ticks=2, default=3")
         except AttributeError as e:
             print(f"Error: {e}. Ensure DataFilterStrenght_slider exists in UI.")
             raise SystemExit(1)
@@ -94,7 +94,7 @@ class AlignmentTab:
             slider_rect_2 = self.ui.FilterOrder_Slider.geometry()
             self.slider_value_label_2.setGeometry(slider_rect_2.x(), slider_rect_2.y() - 20, 50, 20)
             self.ui.FilterOrder_Slider.valueChanged.connect(self.update_FilterOrder_Slider_label_2)
-            print("FilterOrder_Slider configured: range=0-2, step=1, ticks=1, default=1")
+           #print("FilterOrder_Slider configured: range=0-2, step=1, ticks=1, default=1")
         except AttributeError as e:
             print(f"Error: {e}. Ensure FilterOrder_Slider exists in UI.")
             raise SystemExit(1)
@@ -134,7 +134,7 @@ class AlignmentTab:
             slider_rect_4 = self.ui.MaxStretch_slider.geometry()
             self.slider_value_label_4.setGeometry(slider_rect_4.x(), slider_rect_4.y() - 20, 50, 20)
             self.ui.MaxStretch_slider.valueChanged.connect(self.update_MaxStretch_slider_4_label)
-            print("MaxStretch_slider configured: range=5-20, step=1, ticks=5, default=5")
+            #print("MaxStretch_slider configured: range=5-20, step=1, ticks=5, default=5")
         except AttributeError as e:
             print(f"Error: {e}. Ensure MaxStretch_slider exists in UI.")
             raise SystemExit(1)
@@ -151,7 +151,7 @@ class AlignmentTab:
             self.ui.Import_Calib_button.setStyleSheet("background-color: yellow; color: black;")
             self.ui.Import_Data_button.setStyleSheet("background-color: yellow; color: black;")
             self.ui.start_alignment_button.setStyleSheet("background-color: red; color: black;")
-            print("Button colors initialized: Import_Calib_button=yellow, Import_Data_button=yellow, start_alignment_button=red")
+            #print("Button colors initialized: Import_Calib_button=yellow, Import_Data_button=yellow, start_alignment_button=red")
         except AttributeError as e:
             print(f"Error: {e}. Ensure Import_Calib_button, Import_Data_button, and start_alignment_button exist in UI.")
             raise SystemExit(1)
@@ -174,12 +174,12 @@ class AlignmentTab:
             raise SystemExit(1)
 
         # Initialize matplotlib canvases
-        print("Initializing canvases")
+        #print("Initializing canvases")
         self.figure_preview = Figure(figsize=self.G_canvas_aspect_ratio/self.G_canvas_dpi, dpi=self.G_canvas_dpi)
         self.canvas_preview = FigureCanvas(self.figure_preview)
         try:
             self.ui.importfigure_verticalLayout.addWidget(self.canvas_preview)
-            print("Preview canvas added to CalibTab_verticalLayout_2")
+            #print("Preview canvas added to CalibTab_verticalLayout_2")
         except AttributeError as e:
             print(f"Error: {e}. Ensure CalibTab_verticalLayout_2 exists.")
             raise SystemExit(1)
@@ -188,7 +188,7 @@ class AlignmentTab:
         self.canvas_rough = FigureCanvas(self.figure_rough)
         try:
             self.ui.RoughFigure_verticalLayout.addWidget(self.canvas_rough)
-            print("Rough canvas added to CalibTab_verticalLayout_4")
+            #print("Rough canvas added to CalibTab_verticalLayout_4")
         except AttributeError as e:
             print(f"Error: {e}. Ensure CalibTab_verticalLayout_4 exists.")
             raise SystemExit(1)
@@ -198,7 +198,7 @@ class AlignmentTab:
         self.canvas_fine = FigureCanvas(self.figure_fine)
         try:
             self.ui.FineAlign_verticalLayout.addWidget(self.canvas_fine)
-            print("Fine canvas added to CalibTab_verticalLayout_5")
+            #print("Fine canvas added to CalibTab_verticalLayout_5")
         except AttributeError as e:
             print(f"Error: {e}. Ensure CalibTab_verticalLayout_5 exists.")
             raise SystemExit(1)
@@ -207,7 +207,7 @@ class AlignmentTab:
         self.canvas_final = FigureCanvas(self.figure_final)
         try:
             self.ui.CalibTab_verticalLayout_3.addWidget(self.canvas_final)
-            print("Final canvas added to CalibTab_verticalLayout_3")
+            #print("Final canvas added to CalibTab_verticalLayout_3")
         except AttributeError as e:
             print(f"Error: {e}. Ensure CalibTab_verticalLayout_3 exists.")
             raise SystemExit(1)
@@ -308,40 +308,36 @@ class AlignmentTab:
 
     def apply_parameters_to_data(self, X, Y, borders, is_flipped):
         """Apply borders and flip parameters to data."""
-        print(f"Applying parameters: borders={borders}, is_flipped={is_flipped}")
+        #print(f"Applying parameters: borders={borders}, is_flipped={is_flipped}")
     
         X_out, Y_out = X.copy(), Y.copy()
     
-        # Apply the passed-in borders first, then flip if necessary
-        borders_adjusted = sorted(borders)  # Ensure ascending order for borders
-        print(f"Adjusted borders: {borders_adjusted}")
+        # Convert borders to pixel indices (mimic PySimpleGUI)
+        borders_i = [int(self.get_closest_pxl_to_value(X_out, borders[0])[0]), 
+                     int(self.get_closest_pxl_to_value(X_out, borders[1])[0])]
+        borders_i = sorted(borders_i)  # Ensure ascending order
     
-        # Find the indices that match the borders
-        indices = np.where((X_out >= borders_adjusted[0]) & (X_out <= borders_adjusted[1]))[0]
-        if len(indices) == 0:
-            print("Warning: No data within borders")
+        # Apply borders to X and Y (inclusive slicing to match PySimpleGUI)
+        if borders_i[0] >= len(X_out) or borders_i[1] >= len(X_out):
+            print("Warning: Border indices out of range")
             return X_out, Y_out
+        X_out = X_out[borders_i[0]:borders_i[1]+1]
+        Y_out = Y_out[borders_i[0]:borders_i[1]+1]
     
-        # Trim the data to the selected range
-        X_out = X_out[indices]
-        Y_out = Y_out[indices]
-    
-        # Apply flipping *after* trimming the dataset
+        # Apply flipping after trimming
         if is_flipped:
             X_out = X_out[::-1]  # Flip X
             Y_out = Y_out[::-1]  # Flip Y
-            print(f"Data flipped: X range {np.min(X_out):.3f} to {np.max(X_out):.3f}, Y range {np.min(Y_out):.3f} to {np.max(Y_out):.3f}")
+            #print(f"Data flipped: X range {np.min(X_out):.3f} to {np.max(X_out):.3f}, Y range {np.min(Y_out):.3f} to {np.max(Y_out):.3f}")
     
-        print(f"Output X range: {np.min(X_out):.3f} to {np.max(X_out):.3f}, "
-              f"Y min={np.min(Y_out):.3f}, max={np.max(Y_out):.3f}")
-    
+        #print(f"X_out range: {np.min(X_out):.3f} to {np.max(X_out):.3f}, Y_out shape: {Y_out.shape}")
         return X_out, Y_out
-
-
+    
+    
     
     def apply_lin_offset(self, X_cal, Y_cal, X_dat, Y_dat, m, t):
         """Apply linear offset to align X_cal and X_dat ranges."""
-        print(f"Applying lin offset: m={m:.3f}, t={t:.3f}, X_cal range={np.min(X_cal):.3f} to {np.max(X_cal):.3f}, X_dat range={np.min(X_dat):.3f} to {np.max(X_dat):.3f}")
+        #print(f"Applying lin offset: m={m:.3f}, t={t:.3f}, X_cal range={np.min(X_cal):.3f} to {np.max(X_cal):.3f}, X_dat range={np.min(X_dat):.3f} to {np.max(X_dat):.3f}")
         
         X_cal = m * X_cal + t
         X_dat_low_to_high = np.sign(X_dat[0] - X_dat[-1]) == -1
@@ -389,7 +385,7 @@ class AlignmentTab:
                 X_cal = X_cal[::-1]
                 Y_cal = Y_cal[::-1]
         
-        print(f"After lin offset: X_cal range={np.min(X_cal):.3f} to {np.max(X_cal):.3f}, X_dat range={np.min(X_dat):.3f} to {np.max(X_dat):.3f}")
+        #print(f"After lin offset: X_cal range={np.min(X_cal):.3f} to {np.max(X_cal):.3f}, X_dat range={np.min(X_dat):.3f} to {np.max(X_dat):.3f}")
         return X_cal, Y_cal, X_dat, Y_dat 
 
     def reset_calibration_state(self):
@@ -398,7 +394,7 @@ class AlignmentTab:
         self.new_cal_data_available = True
         self.ui.Import_Calib_button.setStyleSheet("background-color: yellow; color: black")
         self.ui.start_alignment_button.setStyleSheet("background-color: red; color: black;")
-        print("Import_Calib_button set to yellow due to new calibration sample selection")
+        #print("Import_Calib_button set to yellow due to new calibration sample selection")
         self.update_start_alignment_button()  
 
     def reset_data_state(self):
@@ -406,12 +402,12 @@ class AlignmentTab:
         self.data_imported = False
         self.new_meas_data_available = True
         self.ui.Import_Data_button.setStyleSheet("background-color: yellow; color: black")
-        print("Import_Data_button set to yellow due to new measurement file selection")
+        #print("Import_Data_button set to yellow due to new measurement file selection")
         self.update_start_alignment_button() 
 
     def Main_plot_function(self, fig, X, Y, is_flipped, borders, Plot_type="line", **kwargs):
         """Plot data on the given figure."""
-        print(f"Plotting: is_flipped={is_flipped}, borders={borders}, Plot_type={Plot_type}")
+        #print(f"Plotting: is_flipped={is_flipped}, borders={borders}, Plot_type={Plot_type}")
         X, Y = self.apply_parameters_to_data(X, Y, borders, is_flipped)
         ax = fig.gca()
         if Plot_type == "scatter":
@@ -421,7 +417,7 @@ class AlignmentTab:
         Y_range = np.nanmax(Y) - np.nanmin(Y)
         Y_mid = (np.nanmax(Y) + np.nanmin(Y)) / 2
         ax.set_ylim([Y_mid - (Y_range / 2) * 1.03, Y_mid + (Y_range / 2) * 1.03])
-        print(f"Y limits: {ax.get_ylim()}")
+        #print(f"Y limits: {ax.get_ylim()}")
         return fig, X, Y
 
     def draw_xlabel(self, Quantity="Depth", is_log=False):
@@ -429,7 +425,7 @@ class AlignmentTab:
         ax = self.figure_fine.gca() if self.figure_fine.axes else self.figure_preview.gca()
         if Quantity == "Depth":
             ax.set_xlabel("Depth [mm]")
-            print("X label set to Depth [mm]")
+            #print("X label set to Depth [mm]")
         else:
             label = 'SSRM measured resistance' if self.G_dat_datatype == "SSRM" else self.G_dat_denomination
             if is_log and self.G_dat_datatype == "SSRM":
@@ -439,7 +435,7 @@ class AlignmentTab:
             ax.set_xlabel(label, fontsize=10)
             ax.tick_params(axis='both', which='major', labelsize=10)
             ax.tick_params(axis='both', which='minor', labelsize=10)
-            print(f"X label set to {label}")
+            #print(f"X label set to {label}")
 
     def draw_ylabel(self, Quantity="Calibration", is_log=True):
         """Set y-axis label."""
@@ -453,7 +449,7 @@ class AlignmentTab:
                 unit = '$\Omega$cm'
             elif self.main_window.select_calibration_tab.G_cal_setting == 3:
                 ax.set_ylabel(self.main_window.select_calibration_tab.denomination)
-                print(f"Y label set to {self.main_window.select_calibration_tab.denomination}")
+                #print(f"Y label set to {self.main_window.select_calibration_tab.denomination}")
                 return
             if is_log:
                 label = f"{identifier} [$log_{{10}}$({unit})]"
@@ -466,7 +462,7 @@ class AlignmentTab:
             elif self.G_dat_datatype == "SSRM":
                 label += ' [$\Omega$]'
             ax.set_ylabel(label)
-            print(f"Y label set to {label}")
+            #print(f"Y label set to {label}")
             return
         ax.set_ylabel(label, fontsize=10)
         print(f"Y label set to {label}")
@@ -476,7 +472,7 @@ class AlignmentTab:
         ax = self.figure_preview.gca()
         ax.grid(color='b', which='minor', ls='-.', lw=0.25)
         ax.grid(color='b', which='major', ls='-.', lw=0.5)
-        print("Grid drawn")
+        #print("Grid drawn")
     
     def update_start_alignment_button(self):
         """Update start_alignment_button color based on import states."""
@@ -492,7 +488,7 @@ class AlignmentTab:
         """Handle start_alignment_button click to set it to green and trigger redraws."""
         if self.cal_imported and self.data_imported and not self.new_cal_data_available and not self.new_meas_data_available:
             self.ui.start_alignment_button.setStyleSheet("background-color: green; color: black")
-            print("start_alignment_button set to green after click")
+            #print("start_alignment_button set to green after click")
             self.redraw_rough_plot()
             self.redraw_fine_plot()
             self.redraw_final_plot()
@@ -526,12 +522,11 @@ class AlignmentTab:
             meas_tab = self.main_window.import_measurement_tab  # Access the Import Measurement tab
     
             # Fetch the current state of data, flipped, and borders from the Measurement tab
-            self.X_data = meas_tab.X_data_range.copy() * 1e6  # nm to µm
-            self.X_data = (self.X_data - self.X_data[0]) * 1e-6  # Normalize and convert to mm
+            self.X_data = meas_tab.X_data_range.copy()  # Directly copy X_data_range (assumed in µm or mm)
             self.Y_data = meas_tab.Y_data.copy()
             self.borders_data = meas_tab.borders_data.copy()  # Include borders from measurement tab
             self.data_is_flipped = meas_tab.data_is_flipped  # Retrieve flipped state
-             
+    
             # Debugging Information
             print(f"Updated X_data: {self.X_data}")
             print(f"Updated Y_data: {self.Y_data}")
@@ -553,34 +548,6 @@ class AlignmentTab:
                 self.main_window, "Error", "Measurement tab not found. Aborting import."
             )
         
-    
-    def load_data(self, path_data):
-        """Load measurement data from a text file (fallback method)."""
-        print(f"Attempting to load measurement file: {path_data}")
-        if not os.path.exists(path_data):
-            print(f"Error: File does not exist: {path_data}")
-            return None
-        if not os.access(path_data, os.R_OK):
-            print(f"Error: File is not readable: {path_data}")
-            return None
-        try:
-            with open(path_data, 'r', encoding='utf-8') as f:
-                lines = f.readlines()[:5]
-                print("File preview (first 5 lines):")
-                for i, line in enumerate(lines):
-                    print(f"Line {i+1}: {line.strip()}")
-            data = np.loadtxt(path_data, delimiter=None, usecols=(0, 1))
-            print(f"Data shape after load: {data.shape}")
-            if len(data.shape) != 2 or data.shape[1] != 2:
-                print(f"Invalid shape: {data.shape}")
-                return None
-            if not np.all(np.isfinite(data)):
-                print("Error: Data contains non-numeric or invalid values")
-                return None
-            return data
-        except Exception as e:
-            print(f"Failed to load data: {str(e)}")
-            return None
 
     def redraw_alignment_preview(self):
         """Redraw the alignment preview plot with calibration and measurement data."""
@@ -615,16 +582,19 @@ class AlignmentTab:
             ax2.legend(loc='upper right')
     
         if self.cal_imported or self.data_imported:
-            x_min = min(np.min(self.X_c) if self.cal_imported else np.inf, np.min(self.X_data) if self.data_imported else np.inf)
-            x_max = max(np.max(self.X_c) if self.cal_imported else -np.inf, np.max(self.X_data) if self.data_imported else -np.inf)
+            # Use trimmed X_c and X_data ranges for X-axis limits
+            x_min = min(np.min(X_c) if self.cal_imported and X_c.size > 0 else np.inf, 
+                        np.min(X_data) if self.data_imported and X_data.size > 0 else np.inf)
+            x_max = max(np.max(X_c) if self.cal_imported and X_c.size > 0 else -np.inf, 
+                        np.max(X_data) if self.data_imported and X_data.size > 0 else -np.inf)
             ax.set_xlim(x_min - 0.5, x_max)
             print(f"X-axis limits: {ax.get_xlim()}")
-        
-        
+    
         self.figure_preview.tight_layout()
         self.canvas_preview.draw_idle()
         print("Preview plot drawn")
 
+        
     def differentiate_for_peak_finding(self, test_data, filterwidth):
         """Differentiate data for peak finding, with optional smoothing."""
         if filterwidth != 0:
