@@ -214,6 +214,13 @@ class AlignmentTab:
 
         # Initialize G_alignment_fine_iterations
         self.G_alignment_fine_iterations = 50  # Default value from PySimpleGUI
+        #try:
+        #    self.G_alignment_fine_iterations = int(self.ui.fine_alignement_lineedit.text())
+        #    print(f"PyQt - AlignmentTab: G_alignment_fine_iterations set to {self.G_alignment_fine_iterations}")
+        #except AttributeError:
+        #    print(f"Warning: fine_alignment_lineedit not found, using default G_alignment_fine_iterations={self.G_alignment_fine_iterations}")
+        #except ValueError:
+        #    print(f"Warning: Invalid value in fine_alignment_lineedit, using default G_alignment_fine_iterations={self.G_alignment_fine_iterations}")
         try:
             self.ui.fine_alignement_lineedit.textChanged.connect(self.update_fine_iterations)
             self.update_fine_iterations(self.ui.fine_alignement_lineedit.text())
@@ -610,12 +617,20 @@ class AlignmentTab:
         return test_data
 
     def find_step_pos(self, X, Y, Mode="automatic Mode", fixed_filterwidth=None, variable_set="Alignment"):
-        cal_name = self.ui.calib_sample_combobox.currentText()
-        preset_key = "Charge carriers -- default" if self.main_window.select_calibration_tab.G_cal_setting == 1 else "Resistivity -- default"
-        step_dist = preset_lib.get(cal_name, {}).get(preset_key, {}).get("-step_distance-")
-        step_num = preset_lib.get(cal_name, {}).get(preset_key, {}).get("-num_steps-")
+        if variable_set == "Get Fitpoints":
+            step_dist = self.main_window.fitpoints_tab.G_fit_min_dist
+            step_num = self.main_window.fitpoints_tab.G_fit_num - int(self.main_window.fitpoints_tab.fit_includeleft) - int(self.main_window.fitpoints_tab.fit_includeright)
+            if step_num < 1:
+                print("PyQt - Error: step_num < 1 in Get Fitpoints")
+                return None
+        else:  # Alignment
+            cal_name = self.ui.calib_sample_combobox.currentText()
+            preset_key = "Charge carriers -- default" if self.main_window.select_calibration_tab.G_cal_setting == 1 else "Resistivity -- default"
+            step_dist = preset_lib.get(cal_name, {}).get(preset_key, {}).get("-step_distance-")
+            step_num = preset_lib.get(cal_name, {}).get(preset_key, {}).get("-num_steps-")
         if step_dist is None or step_num is None:
-            raise ValueError(f"Missing step_dist or step_num for {cal_name} in {preset_key}")
+            print(f"PyQt - Error: Missing step_dist or step_num for {cal_name} in {preset_key}")
+            return None
         x_interval = np.abs(X[-1] - X[0])
         if x_interval == 0:
             print("PyQt - Error: X range is zero, cannot compute steps")
@@ -623,7 +638,7 @@ class AlignmentTab:
         step_distance_pxls = max(1, int(step_dist / x_interval * X.size))
         print(f"PyQt - Step detection: filterwidth={fixed_filterwidth}, step_dist={step_dist}, step_num={step_num}, x_interval={x_interval:.3f}, step_distance_pxls={step_distance_pxls}")
         test_data = self.differentiate_for_peak_finding(Y, fixed_filterwidth)
-        height_threshold = np.percentile(test_data, 20) if np.max(test_data) > 0 else 1  # Increase threshold
+        height_threshold = np.percentile(test_data, 10) if np.max(test_data) > 0 else 1  # Match PySimpleGUI
         peaks, properties = find_peaks(test_data, distance=step_distance_pxls, height=height_threshold)
         peak_pos_pxls = peaks.tolist()
         peak_height = properties['peak_heights'].tolist()
@@ -647,7 +662,7 @@ class AlignmentTab:
             peak_pos = X[peak_pos_pxls]
         print(f"PyQt - Steps found: {len(peak_pos)}, positions={peak_pos[:min(len(peak_pos), 5)]}...")
         return peak_pos
-        
+    
     def redraw_rough_plot(self):
         """Redraw the rough alignment heatmap and update result labels."""
         print("Redrawing rough alignment plot")
@@ -670,6 +685,7 @@ class AlignmentTab:
             cal_name = self.ui.calib_sample_combobox.currentText()
             preset_key = "Charge carriers -- default" if self.main_window.select_calibration_tab.G_cal_setting == 1 else "Resistivity -- default"
             print(f"PyQt - Calibration sample: {cal_name}")
+            self.cal_name=cal_name
         
             steps_c = self.find_step_pos(X_cal, Y_cal, Mode="automatic Mode", fixed_filterwidth=0, variable_set="Alignment")
             if steps_c is None:
@@ -725,6 +741,7 @@ class AlignmentTab:
         
             try:
                 self.ui.label_20.setText(f"{np.max(quality):.2f}")
+                self.quality=quality
                 self.ui.get_stretch_in_percentage.setText(f"{(optimal_m - 1) * 100:.1f}")
                 self.ui.get_shift_in_nm.setText(f"{optimal_t * 1000:.0f}")
                 print("PyQt - Updated labels: quality={:.2f}, stretch={:.1f}%, shift={:.0f}nm".format(
@@ -817,7 +834,7 @@ class AlignmentTab:
             plateau_order = sorted(range(len(Y_plateaus_cal)), key=lambda k: Y_plateaus_cal[k])
         Y_plateaus_cal = [Y_plateaus_cal[i] for i in plateau_order]
         Y_plateaus_dat = [Y_plateaus_dat[i] for i in plateau_order]
-    
+        
         my_data = np.c_[self.ref(X_cal), Y_cal]
         my_data = my_data[my_data[:, 0].argsort()]
         x_spaced = np.linspace(my_data[0, 0], my_data[-1, 0], my_data.shape[0] * arr_factor)
@@ -913,6 +930,7 @@ class AlignmentTab:
             self.ui.get_stretch_in_percentage.setText(f"{(self.best_m - 1) * 100:.1f}")
             self.ui.get_shift_in_nm.setText(f"{self.best_t * 1000:.0f}")
             self.ui.label_20.setText(f"{quals[i]:.2f}")
+            self.quals=quals
         except AttributeError as e:
             print(f"Error: {e}. Ensure get_stretch_in_percentage, get_shift_in_nm, and label_20 exist in UI.")
         

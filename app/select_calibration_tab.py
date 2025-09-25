@@ -1916,6 +1916,7 @@ class SelectCalibrationTab:
                 self.ui.calibration_data_lineEdit.setText(path_data)
                 self.reset_data_window()
                 self.redraw_data_preview()
+                self.path_data = path_data
                 print("Data imported successfully")
                 QMessageBox.information(self.main_window, "Success", "Calibration data imported successfully!")
                 return True
@@ -1979,9 +1980,12 @@ class SelectCalibrationTab:
         self.data_is_flipped = preset["-flip_cal_data-"]
         self.G_cal_setting = preset["-cal_setting-"]
         self.scale_cal_data = preset["-scale_cal-"]
+        self.G_dopant_type = preset["-dopant_type-"]
         self.G_carrier_type = preset["-dopant_type-"]
         self.G_step_distance = preset["-step_distance-"]
         self.G_number_of_steps = preset["-num_steps-"]
+        # Set path_data for preset samples
+        #self.path_data = f"preset_{sample}_{preset_name}"  # Unique identifier for preset
         if sample != "Own Sample":
             if self.G_cal_setting == 1:
                 data = data_lib[sample]["data_cc"]

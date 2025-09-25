@@ -100,6 +100,7 @@ class ImportMeasurementTab:
                 self.ui.dataPathLabel.setText(path_data)
                 self.reset_data_window()
                 self.redraw_data_preview()
+                self.path_data=path_data
                 if debug:
                     print(f"Imported data: shape={data.shape}, X_range={X_range}, borders={borders}")
                 QMessageBox.information(self.main_window, "Success", "Measurement data imported successfully!")
