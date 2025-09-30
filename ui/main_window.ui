@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1607</width>
-    <height>835</height>
+    <width>1733</width>
+    <height>958</height>
    </rect>
   </property>
   <property name="maximumSize">
@@ -29,11 +29,11 @@
       <x>0</x>
       <y>30</y>
       <width>1611</width>
-      <height>801</height>
+      <height>811</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>4</number>
     </property>
     <widget class="QWidget" name="importMeasurementTab">
      <attribute name="title">
@@ -941,9 +941,9 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>10</y>
+         <y>0</y>
          <width>451</width>
-         <height>291</height>
+         <height>301</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="importfigure_verticalLayout"/>
@@ -1397,7 +1397,7 @@
        <string>also include right edge as Anchor ................</string>
       </property>
      </widget>
-     <widget class="QLabel" name="Num_fitpoints_between_1_2_label">
+     <widget class="QLabel" name="label_1_and_2">
       <property name="geometry">
        <rect>
         <x>80</x>
@@ -1410,7 +1410,7 @@
        <string>Num fitpoints between point 1 and 2 ................</string>
       </property>
      </widget>
-     <widget class="QLabel" name="Num_fitpoints_between_2_3_label">
+     <widget class="QLabel" name="label_2_and_3">
       <property name="geometry">
        <rect>
         <x>80</x>
@@ -1423,7 +1423,7 @@
        <string>Num fitpoints between point 2 and 3 ................</string>
       </property>
      </widget>
-     <widget class="QLabel" name="Num_fitpoints_between_3_4_label">
+     <widget class="QLabel" name="label_3_and_4">
       <property name="geometry">
        <rect>
         <x>80</x>
@@ -1436,7 +1436,7 @@
        <string>Num fitpoints between point 3 and 4 ................</string>
       </property>
      </widget>
-     <widget class="QLabel" name="Num_fitpoints_between_4_5_label">
+     <widget class="QLabel" name="label_4_and_5">
       <property name="geometry">
        <rect>
         <x>80</x>
@@ -1648,8 +1648,8 @@
      <widget class="QPushButton" name="Fit_go_pushButton">
       <property name="geometry">
        <rect>
-        <x>50</x>
-        <y>660</y>
+        <x>660</x>
+        <y>680</y>
         <width>251</width>
         <height>71</height>
        </rect>
@@ -1658,11 +1658,241 @@
        <string>Show Fit Anchor Points</string>
       </property>
      </widget>
+     <widget class="QLabel" name="label_5_and_6">
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>590</y>
+        <width>411</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Num fitpoints between point 5 and 6 ................</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_6_and_7">
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>620</y>
+        <width>411</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Num fitpoints between point 6 and 7 ................</string>
+      </property>
+     </widget>
+     <widget class="QSlider" name="Num_fitpoints_between_point_5and6_slider">
+      <property name="geometry">
+       <rect>
+        <x>430</x>
+        <y>600</y>
+        <width>201</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QSlider" name="Num_fitpoints_between_point_6and7_slider">
+      <property name="geometry">
+       <rect>
+        <x>430</x>
+        <y>630</y>
+        <width>201</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_7_and_8">
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>650</y>
+        <width>411</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Num fitpoints between point 7 and 8 ................</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_8_and_9">
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>680</y>
+        <width>411</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Num fitpoints between point 8 and 9 ................</string>
+      </property>
+     </widget>
+     <widget class="QSlider" name="Num_fitpoints_between_point_7and8_slider">
+      <property name="geometry">
+       <rect>
+        <x>430</x>
+        <y>660</y>
+        <width>201</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QSlider" name="Num_fitpoints_between_point_8and9_slider">
+      <property name="geometry">
+       <rect>
+        <x>430</x>
+        <y>690</y>
+        <width>201</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_9_and_10">
+      <property name="geometry">
+       <rect>
+        <x>70</x>
+        <y>710</y>
+        <width>411</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Num fitpoints between point 9 and 10 ................</string>
+      </property>
+     </widget>
+     <widget class="QSlider" name="Num_fitpoints_between_point_9and10_slider">
+      <property name="geometry">
+       <rect>
+        <x>430</x>
+        <y>720</y>
+        <width>201</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="tab_5">
      <attribute name="title">
       <string>Calibration</string>
      </attribute>
+     <widget class="QPushButton" name="calibration_startt_pushButton">
+      <property name="geometry">
+       <rect>
+        <x>170</x>
+        <y>50</y>
+        <width>221</width>
+        <height>71</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Start Calibration Fit</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="Convert_to_Charge_Carriers_Button">
+      <property name="geometry">
+       <rect>
+        <x>400</x>
+        <y>50</y>
+        <width>221</width>
+        <height>71</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Convert To charge Carriers</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="Save_To_Database_Button">
+      <property name="geometry">
+       <rect>
+        <x>630</x>
+        <y>50</y>
+        <width>221</width>
+        <height>71</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Save to Database</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="Create_excel_File_Button">
+      <property name="geometry">
+       <rect>
+        <x>870</x>
+        <y>50</y>
+        <width>221</width>
+        <height>71</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Create Excel File</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="Save_As_Png_Button">
+      <property name="geometry">
+       <rect>
+        <x>1110</x>
+        <y>50</y>
+        <width>221</width>
+        <height>71</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Save As PNG</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="Apply_To_Gwyddion_File_Button">
+      <property name="geometry">
+       <rect>
+        <x>1340</x>
+        <y>50</y>
+        <width>221</width>
+        <height>71</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Apply To Gwyddion File</string>
+      </property>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_12">
+      <property name="geometry">
+       <rect>
+        <x>170</x>
+        <y>170</y>
+        <width>681</width>
+        <height>441</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="calibration_overlay_verticalLayout"/>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_25">
+      <property name="geometry">
+       <rect>
+        <x>880</x>
+        <y>170</y>
+        <width>681</width>
+        <height>441</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="Calibration_Curve_verticalLayout"/>
+     </widget>
     </widget>
    </widget>
   </widget>
@@ -1671,7 +1901,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1607</width>
+     <width>1733</width>
      <height>22</height>
     </rect>
    </property>

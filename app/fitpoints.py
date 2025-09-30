@@ -13,6 +13,9 @@ class FitpointsTab:
         self.main_window = main_window
         self.alignment_tab = main_window.alignment_tab
         self.select_calibration_tab = main_window.select_calibration_tab
+        self.import_measurement_tab = main_window.import_measurement_tab
+        #self.calibration_tab = main_window.calibration_tab
+        #self.calibration_tab= main_window.calibration_tab
 
         # Global settings
         self.G_canvas_aspect_ratio = np.array([544, 300])
@@ -120,6 +123,11 @@ class FitpointsTab:
         self.set_auto_mode()
         self.update_from_preset(self.select_calibration_tab.ui.calib_sample_combobox.currentText())
 
+    
+    def reset_show_Fit_anchor_button_state(self):
+        """Reset measurement import state and update button colors."""
+        self.ui.Fit_go_pushButton.setStyleSheet("background-color: yellow; color: black")
+        
 
     def update_from_preset(self, cal_name):
         """Update fit parameters from preset_lib based on selected calibration sample."""
@@ -254,34 +262,52 @@ class FitpointsTab:
         print("All manual fitpoints deleted")
 
 
-    def draw_xlabel(self, ax, quantity="Depth", is_log=False):
-        """Set x-axis label for the plot."""
-        if quantity == "Depth":
-            ax.set_xlabel("Depth [µm]", fontsize=10)
+    def draw_xlabel(self, Quantity="Depth", is_log=False):
+        """Set x-axis label."""
+        ax = self.main_window.calibration_tab.figure_calibration_curve.gca() if self.main_window.calibration_tab.figure_calibration_curve.axes else self.main_window.calibration_tab.figure_calibration_curve.gca()
+        if Quantity == "Depth":
+            ax.set_xlabel("Depth [mm]")
+            #print("X label set to Depth [mm]")
         else:
-            label = "SSRM measured resistance"
-            if is_log:
-                label += " [$log_{10}(\\Omega)$]"
-            else:
-                label += " [$\\Omega$]"
+            label = 'SSRM measured resistance' if self.main_window.import_measurement_tab.G_dat_datatype == "SSRM" else self.main_window.import_measurement_tab.G_dat_denomination
+            if is_log and self.G_dat_datatype == "SSRM":
+                label += ' [$log_{10}(\Omega)$]'
+            elif self.main_window.import_measurement_tab.G_dat_datatype == "SSRM":
+                label += ' [$\Omega$]'
             ax.set_xlabel(label, fontsize=10)
-        ax.tick_params(axis='both', which='major', labelsize=10)
-        ax.tick_params(axis='both', which='minor', labelsize=10)
+            ax.tick_params(axis='both', which='major', labelsize=10)
+            ax.tick_params(axis='both', which='minor', labelsize=10)
 
-    #def draw_ylabel(self, ax, quantity="Calibration", is_log=True):
-    #    """Set y-axis label for the plot."""
-    #    if quantity == "Calibration":
-    #        if self.select_calibration_tab.G_cal_setting == 1:
-    #            identifier = f"{self.alignment_tab.G_carrier_type} charge carrier concentration"
-    #            unit = "cm$^{-3}$"
-    #        elif self.select_calibration_tab.G_cal_setting == 2:
-    #            identifier = "SRP measured resistivity ρ"
-    #            unit = "$\\Omega$cm"
-    #        else:
-    #            identifier = getattr(self, 'cal_data_denomination', "Calibration")
-    #            unit = ""
-    #        label = identifier + (f" [$log_{{10}}({unit})]" if is_log and unit else f" [{unit}]" if unit else "")
-    #    ax.set_ylabel(label, fontsize=10)
+    def draw_ylabel(self, Quantity="Calibration", is_log=True, figure=None):
+        """Set y-axis label for the specified figure."""
+        # Use provided figure or default to figure_preview
+        figure = figure or self.figure_preview
+        ax = figure.gca()
+        if Quantity == "Calibration":
+            if self.main_window.select_calibration_tab.G_cal_setting == 1:
+                # Use p-type or n-type based on G_carrier_type
+                carrier_label = "p-type" if self.main_window.select_calibration_tab.G_carrier_type == "B" else "n-type"
+                identifier = f"{carrier_label} charge carrier concentration"
+                unit = "cm$^{-3}$"
+            elif self.main_window.select_calibration_tab.G_cal_setting == 2:
+                identifier = "SRP measured resistivity ρ"
+                unit = "Ωcm"
+            elif self.main_window.select_calibration_tab.G_cal_setting == 3:
+                ax.set_ylabel(self.main_window.select_calibration_tab.denomination, fontsize=10)
+                print(f"Y label set to {self.main_window.select_calibration_tab.denomination}")
+                return
+            if is_log:
+                label = f"{identifier} [$log_{{10}}$({unit})]"
+            else:
+                label = f"{identifier} [{unit}]"
+        elif Quantity == "Data":
+            label = "SSRM measured resistance" if self.G_dat_datatype == "SSRM" else self.import_measurement_tab.G_dat_denomination
+            if is_log and self.G_dat_datatype == "SSRM":
+                label += " [$log_{10}(\Omega)$]"
+            elif self.G_dat_datatype == "SSRM":
+                label += " [$\Omega$]"
+        ax.set_ylabel(label, fontsize=10)
+        print(f"Y label set to {label}")
 
     def draw_grid(self, ax):
         """Add grid to the plot."""
@@ -294,7 +320,7 @@ class FitpointsTab:
             if mode == "Calibration":
                 ax.plot(np.power(10., Y_plateaus_dat), np.power(10., Y_plateaus_cal), color='blue', label='calibration (initial guess)', zorder=0)
             ax.scatter(np.power(10.,self.alignment_tab.ref(X_cal)), np.power(10., Y_cal), color='blue', alpha=0.25, label='Datapoints')
-            self.draw_xlabel(ax, quantity="Data", is_log=False)
+            #self.draw_xlabel()
             #self.draw_ylabel(ax, quantity="Calibration", is_log=False)
             self.draw_grid(ax)
             ax.set_xscale('log')
@@ -480,6 +506,8 @@ class FitpointsTab:
                         print(f"PyQt - Dark blue star (curve, i={i}, k={k}): x={np.power(10., Y_plateaus_dat[idx]):.3f}, y={np.power(10., Y_plateaus_cal[idx]):.3f}")
         print(f"PyQt - Black star positions (curve): {black_line_positions_curve}")
         
+        self.draw_ylabel(Quantity="Calibration", is_log=not self.main_window.select_calibration_tab.scale_cal_data, figure=self.figure_fit_cal_curve)
+        self.draw_xlabel(Quantity="Data",is_log=False)
         self.figure_fit_cal_curve.tight_layout()
         self.canvas_fit_cal_curve.draw_idle()
         print("PyQt - Fit cal curve plot drawn")
@@ -593,18 +621,21 @@ class FitpointsTab:
         print(f"PyQt - fit_go: initialguess stored: {hasattr(self, 'initialguess')}")
     
         # Linear interpolation
-        interpolation,_function_linint_ = self.make_func(Y_plateaus_cal)
+        interpolation,linint_ = self.make_func(Y_plateaus_cal)
         self.Y_dat_initialguess_calibrated = interpolation(X_dat, *self.initialguess)
         print(f"PyQt - fit_go: Y_dat_initialguess_calibrated: min={np.min(self.Y_dat_initialguess_calibrated):.3f}, max={np.max(self.Y_dat_initialguess_calibrated):.3f}, len={len(self.Y_dat_initialguess_calibrated)}")
         print(f"PyQt - fit_go: Y_dat_initialguess_calibrated stored: {hasattr(self, 'Y_dat_initialguess_calibrated')}")
         
         self.interpolation = interpolation
+        self.linint_=linint_
         
 
         # Plot calibration overlay
         self.main_window.calibration_tab.figure_calibration_overlay.clear()
         ax = self.main_window.calibration_tab.figure_calibration_overlay.add_subplot(111)
         self.main_window.calibration_tab.redraw_calibration_overlay_init(ax, X_cal, Y_cal, X_dat, self.Y_dat_initialguess_calibrated)
+        self.draw_ylabel(Quantity="Calibration", is_log=not self.main_window.select_calibration_tab.scale_cal_data, figure=self.main_window.calibration_tab.figure_calibration_overlay)
+        ax.set_xlabel("Depth [µm]")
         self.main_window.calibration_tab.figure_calibration_overlay.tight_layout()
         self.main_window.calibration_tab.canvas_calibration_overlay.draw_idle()
         print("PyQt - Calibration overlay plotted")
@@ -630,14 +661,12 @@ class FitpointsTab:
                         ax3.scatter(np.power(10., Y_plateaus_dat[i + k]), np.power(10., Y_plateaus_cal[i + k]), 
                                     marker='*', fc='darkblue', s=70, zorder=1)
                         print(f"PyQt - Dark blue star (curve, i={i}, k={k}): x={np.power(10., Y_plateaus_dat[i + k]):.3f}, y={np.power(10., Y_plateaus_cal[i]):.3f}")
+                        
+        self.draw_ylabel(Quantity="Calibration", is_log=not self.main_window.select_calibration_tab.scale_cal_data, figure=self.main_window.calibration_tab.figure_calibration_curve)
+        self.draw_xlabel(Quantity="Data",is_log=False)
         self.main_window.calibration_tab.figure_calibration_curve.tight_layout()
         self.main_window.calibration_tab.canvas_calibration_curve.draw_idle()
         print("PyQt - Calibration curve plotted")
     
         self.ui.Fit_go_pushButton.setStyleSheet("background-color: green; color: black")
-        #try:
-        #    self.ui.calibration_startt_pushButton.setStyleSheet("background-color: yellow; color: black")
-        #    self.ui.calibration_startt_pushButton.setEnabled(True)
-        #    print("PyQt - Calibration unlocked")
-        #except AttributeError:
-        #    print("PyQt - Warning: calibration_startt_pushButton not found")
+        self.main_window.calibration_tab.reset_sstart_calib_button_state()

@@ -8,8 +8,6 @@ from scipy.signal import savgol_filter, find_peaks
 from scipy.interpolate import interp1d, splrep, BSpline
 import os
 from app.select_calibration_tab import preset_lib
-from scipy.signal import savgol_filter
-from scipy.interpolate import splrep, BSpline
 import numpy as np
 
 class AlignmentTab:
@@ -18,6 +16,8 @@ class AlignmentTab:
         """Initialize the tab with UI elements and data attributes."""
         self.ui = ui
         self.main_window = main_window
+        self.import_measurement_tab = main_window.import_measurement_tab
+        #self.fitpoints_tab = main_window.fitpoints_tab
 
         self.new_cal_data_available = False
         self.new_meas_data_available = False
@@ -444,35 +444,39 @@ class AlignmentTab:
             ax.tick_params(axis='both', which='minor', labelsize=10)
             #print(f"X label set to {label}")
 
-    def draw_ylabel(self, Quantity="Calibration", is_log=True):
-        """Set y-axis label."""
-        ax = self.figure_fine.gca() if self.figure_fine.axes else self.figure_preview.gca()
+    def draw_ylabel(self, Quantity="Calibration", is_log=True, figure=None):
+        """Set y-axis label for the specified figure."""
+        # Use provided figure or default to figure_preview
+        
+        figure = figure or self.figure_preview
+        ax = figure.gca()
         if Quantity == "Calibration":
             if self.main_window.select_calibration_tab.G_cal_setting == 1:
-                identifier = f"{self.main_window.select_calibration_tab.G_carrier_type} charge carrier concentration"
+                # Use p-type or n-type based on G_carrier_type
+                carrier_label = "p-type" if self.main_window.select_calibration_tab.G_carrier_type == "B" else "n-type"
+                identifier = f"{carrier_label} charge carrier concentration"
                 unit = "cm$^{-3}$"
             elif self.main_window.select_calibration_tab.G_cal_setting == 2:
                 identifier = "SRP measured resistivity ρ"
-                unit = '$\Omega$cm'
+                unit = "Ωcm"
             elif self.main_window.select_calibration_tab.G_cal_setting == 3:
-                ax.set_ylabel(self.main_window.select_calibration_tab.denomination)
-                #print(f"Y label set to {self.main_window.select_calibration_tab.denomination}")
+                ax.set_ylabel(self.main_window.select_calibration_tab.denomination, fontsize=10)
+                print(f"Y label set to {self.main_window.select_calibration_tab.denomination}")
                 return
             if is_log:
                 label = f"{identifier} [$log_{{10}}$({unit})]"
             else:
                 label = f"{identifier} [{unit}]"
         elif Quantity == "Data":
-            label = 'SSRM measured resistance' if self.G_dat_datatype == "SSRM" else self.G_dat_denomination
+            label = "SSRM measured resistance" if self.main_window.import_measurement_tab.G_dat_datatype == "SSRM" else self.main_window.import_measurement_tab.G_dat_denomination
             if is_log and self.G_dat_datatype == "SSRM":
-                label += ' [$log_{10}(\Omega)$]'
+                label += " [$log_{10}(\Omega)$]"
             elif self.G_dat_datatype == "SSRM":
-                label += ' [$\Omega$]'
-            ax.set_ylabel(label)
-            #print(f"Y label set to {label}")
-            return
+                label += " [$\Omega$]"
         ax.set_ylabel(label, fontsize=10)
         print(f"Y label set to {label}")
+
+        
 
     def draw_grid(self):
         """Draw grid on the plot."""
@@ -487,7 +491,7 @@ class AlignmentTab:
             self.ui.start_alignment_button.setStyleSheet("background-color: yellow; color: black")
             print("start_alignment_button set to yellow: cal_imported=True, data_imported=True")
         else:
-            self.ui.start_alignment_button.setStyleSheet("background-color: red; color: white")
+            self.ui.start_alignment_button.setStyleSheet("background-color: red; color: black")
             print("start_alignment_button set to red: cal_imported=%s, data_imported=%s, new_cal_data_available=%s, new_meas_data_available=%s" % 
                   (self.cal_imported, self.data_imported, self.new_cal_data_available, self.new_meas_data_available))
 
@@ -565,38 +569,38 @@ class AlignmentTab:
     
         if self.cal_imported and self.X_c.size > 1:
             self.figure_preview, X_c, Y_c = self.Main_plot_function(
-                self.figure_preview, self.X_c, self.Y_c, self.cal_is_flipped, self.borders_cal, color='r', label='Calibration'
+                self.figure_preview, self.X_c, self.Y_c, self.cal_is_flipped, self.borders_cal, color="r", label="Calibration"
             )
             print(f"Calibration plotted: is_flipped={self.cal_is_flipped}, X_c range={np.min(X_c):.3f} to {np.max(X_c):.3f}")
             self.draw_ylabel(Quantity="Calibration", is_log=not self.main_window.select_calibration_tab.scale_cal_data)
-            ax.yaxis.label.set_color('red')
-            ax.tick_params(axis='y', colors='red')
-            self.draw_xlabel()
+            ax.yaxis.label.set_color("red")
+            ax.tick_params(axis="y", colors="red")
             self.draw_grid()
-            ax.legend(loc='upper left')
+            ax.legend(loc="upper left")
     
         if self.data_imported and self.X_data.size > 1:
             ax2 = ax.twinx()
             ax2.invert_yaxis()
             self.figure_preview, X_data, Y_data = self.Main_plot_function(
-                self.figure_preview, self.X_data, self.Y_data, self.data_is_flipped, self.borders_data, color='blue', label='Measurement'
+                self.figure_preview, self.X_data, self.Y_data, self.data_is_flipped, self.borders_data, color="blue", label="Measurement"
             )
             print(f"Measurement plotted: is_flipped={self.data_is_flipped}, X_data range={np.min(X_data):.3f} to {np.max(X_data):.3f}")
-            print(f"Measurement data for plotting: X range {np.min(X_data):.3f} to {np.max(X_data):.3f}, Y range: {np.min(Y_data):.3f} to {np.max(Y_data):.3f}")
-            self.draw_ylabel(Quantity="Data", is_log=True)
-            ax2.yaxis.label.set_color('blue')
-            ax2.tick_params(axis='y', colors='blue')
-            ax2.legend(loc='upper right')
+            self.draw_ylabel(Quantity="Data", is_log=False)
+            ax2.yaxis.label.set_color("blue")
+            ax2.tick_params(axis="y", colors="blue")
+            ax2.legend(loc="upper right")
     
         if self.cal_imported or self.data_imported:
-            # Use trimmed X_c and X_data ranges for X-axis limits
             x_min = min(np.min(X_c) if self.cal_imported and X_c.size > 0 else np.inf, 
                         np.min(X_data) if self.data_imported and X_data.size > 0 else np.inf)
             x_max = max(np.max(X_c) if self.cal_imported and X_c.size > 0 else -np.inf, 
                         np.max(X_data) if self.data_imported and X_data.size > 0 else -np.inf)
             ax.set_xlim(x_min - 0.5, x_max)
+            self.draw_xlabel()
             print(f"X-axis limits: {ax.get_xlim()}")
-    
+        
+        ax.set_xlabel("Depth [µm]")
+        ax.set_title("Unaligned Data")
         self.figure_preview.tight_layout()
         self.canvas_preview.draw_idle()
         print("Preview plot drawn")
@@ -733,7 +737,7 @@ class AlignmentTab:
             X_idx -= (X_search[X_idx] - mxt_arr) > (mxt_arr - X_search[X_idx - 1])
             X_idx[X_idx < 0] = 0
             quality = np.sum(Y_search[X_idx], axis=2)
-            print(f"PyQt - Quality matrix shape: {quality.shape}, min={np.min(quality):.3f}, max={np.max(quality):.3f}, mean={np.mean(quality):.3f}")
+            print(f"PyQt - Quality matrix shape: {quality.shape}, min={np.min(quality):.7f}, max={np.max(quality):.3f}, mean={np.mean(quality):.3f}")
             optimal_t = np.mean(t_arr[np.where(quality == np.max(quality))[1]])
             optimal_m = np.mean(m_arr[np.where(quality == np.max(quality))[0]])
             print(f"PyQt - Optimal t: {optimal_t:.3f}, m: {optimal_m:.3f}")
@@ -752,14 +756,14 @@ class AlignmentTab:
             y_min, y_max = G_stretch_allowed_window
             im = ax.imshow(quality[::-1,:], extent=[t_min, t_max, y_min, y_max],
                            aspect=np.abs((t_max - t_min) / (y_max - y_min)), cmap="gnuplot")
-            ax.set_xlabel("Shift (mm)")
-            ax.set_ylabel("Stretch (%)")
+            #ax.set_xlabel("Shift (mm)")
+            #ax.set_ylabel("Stretch (%)")
             x_ticks = np.linspace(t_min, t_max, 4)
             ax.set_xticks(x_ticks)
             ax.set_xticklabels([f"{x:.1f}" for x in x_ticks], rotation=45)
             print(f"PyQt - X-axis ticks: {x_ticks}")
             cbar = self.figure_rough.colorbar(im)
-            cbar.set_label(f"Quality (Filter width={self.G_alignment_filterwidth}, order={self.G_alignment_filterorder})")
+            #cbar.set_label(f"Quality (Filter width={self.G_alignment_filterwidth}, order={self.G_alignment_filterorder})")
             quality_max = np.max(quality)
             quality_min = np.min(quality)
             cbar_ticks = np.linspace(quality_min, quality_max, 7)
@@ -773,7 +777,8 @@ class AlignmentTab:
         
             self.ui.start_alignment_button.setStyleSheet("background-color: green; color: black")
             print("start_alignment_button set to green after rough alignment")
-        
+            
+            self.main_window.fitpoints_tab.reset_show_Fit_anchor_button_state()
             self.figure_rough.tight_layout()
             self.canvas_rough.draw_idle()
             print("PyQt - Rough plot drawn")
@@ -882,7 +887,7 @@ class AlignmentTab:
             ax = self.figure_fine.gca()
             ax.scatter(self.ref(X_cal), Y_cal, color="blue", alpha=0.25, label="Datapoints")
             self.draw_xlabel(Quantity="Data", is_log=False)
-            self.draw_ylabel(Quantity="Calibration", is_log=False)
+            self.draw_ylabel(Quantity="Calibration", is_log=not self.main_window.select_calibration_tab.scale_cal_data, figure=self.figure_fine)
             #self.draw_grid()
             ax.scatter(Y_plateaus_dat, Y_plateaus_cal, color="red", alpha=1, label="Plateau points")
             handles, labels = ax.get_legend_handles_labels()
@@ -923,9 +928,11 @@ class AlignmentTab:
         i = np.argmin(quals)
         self.best_m = self.m_arr[int(best_fits[0, i])]
         self.best_t = self.t_arr[int(best_fits[1, i])]
-        print(f"Fine alignment results: quality={quals[i]:.2f}, stretch={(self.best_m - 1) * 100:.1f}%, shift={self.best_t * 1000:.0f}nm")
-    
+        print(f"Fine alignment results: quality={quals[i]:.7f}, stretch={(self.best_m - 1) * 100:.1f}%, shift={self.best_t * 1000:.0f}nm")
+        
+        self.quality=quals[i]
         self.finealign_profiles_via_spline_matching(X_cal, Y_cal, X_dat, Y_dat, self.best_m, self.best_t, plot=True)
+
         try:
             self.ui.get_stretch_in_percentage.setText(f"{(self.best_m - 1) * 100:.1f}")
             self.ui.get_shift_in_nm.setText(f"{self.best_t * 1000:.0f}")
@@ -934,11 +941,14 @@ class AlignmentTab:
         except AttributeError as e:
             print(f"Error: {e}. Ensure get_stretch_in_percentage, get_shift_in_nm, and label_20 exist in UI.")
         
+
         # Add grid to the fine plot axes
         ax = self.figure_fine.gca()
         ax.grid(color='b', which='minor', ls='-.', lw=0.25)
         ax.grid(color='b', which='major', ls='-.', lw=0.5)
         print("Grid drawn on fine plot")
+
+
         
         self.canvas_fine.draw_idle()
         print("Fine plot drawn")
@@ -1014,7 +1024,7 @@ class AlignmentTab:
         ax.yaxis.label.set_color('red')
         ax.tick_params(axis='y', colors='red')
         ax.set_ylim([np.max(Y_cal) - 1.05 * (np.max(Y_cal) - np.min(Y_cal)), np.max(Y_cal) * 1.05])
-        ax.set_xlabel("Depth [mm]")
+        #ax.set_xlabel("Depth [mm]")
         #ax.grid(color='b', which='major', ls='-.', lw=0.5)
         #ax.grid(color='b', which='minor', ls='-.', lw=0.25)
         ax.legend(loc='upper left')
@@ -1031,6 +1041,8 @@ class AlignmentTab:
         x_max = max(np.max(X_cal), np.max(X_dat))
         ax.set_xlim(x_min - 0.5, x_max)
         print(f"Final plot - X-axis limits: {ax.get_xlim()}")
+
+        self.main_window.calibration_tab.reset_buttons_state()
         
         self.figure_final.tight_layout()
         self.canvas_final.draw_idle()

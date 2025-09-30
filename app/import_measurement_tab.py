@@ -54,8 +54,9 @@ class ImportMeasurementTab:
         """Open file dialog to select a measurement file and import its data."""
         initial_dir = self.last_directory
         file_path, _ = QFileDialog.getOpenFileName(
-            self.main_window, "Select Measurement File", initial_dir, "Text Files (*.txt)"
+            self.main_window, "Select Measurement File", initial_dir, 
         )
+        #self.main_window, "Select Measurement File", initial_dir, "Text Files (*.txt)"
         if file_path:
             self.measurement_file = file_path
             self.last_directory = os.path.dirname(file_path)
@@ -146,6 +147,7 @@ class ImportMeasurementTab:
             self.ui.leftSliderValueLabel.setText(f"{self.borders_data[0]:.3f}")
             self.update_slider_label_position(self.ui.leftBorderSlider, self.ui.leftSliderValueLabel, value)
             self.update_slider_label_position(self.ui.rightBorderSlider, self.ui.rightSliderValueLabel, int(self.borders_data[1] * 1000))
+            self.main_window.alignment_tab.reset_data_state()
             self.ui.applyParametersButton.setEnabled(True)
 
     def change_right_border(self, value):
@@ -167,6 +169,7 @@ class ImportMeasurementTab:
             self.ui.rightSliderValueLabel.setText(f"{self.borders_data[1]:.3f}")
             self.update_slider_label_position(self.ui.rightBorderSlider, self.ui.rightSliderValueLabel, value)
             self.update_slider_label_position(self.ui.leftBorderSlider, self.ui.leftSliderValueLabel, int(self.borders_data[0] * 1000))
+            self.main_window.alignment_tab.reset_data_state()
             self.ui.applyParametersButton.setEnabled(True)
 
     def reset_data_window(self):
@@ -309,6 +312,7 @@ class ImportMeasurementTab:
     def update_denomination(self, text):
         """Update denomination for 'Other' data type."""
         self.denomination = text
+        self.G_dat_denomination= self.denomination
         self.ui.applyParametersButton.setEnabled(True)
 
     def apply_parameters(self):

@@ -2031,6 +2031,8 @@ class SelectCalibrationTab:
         self.reset_data_window()
         self.redraw_data_preview()
         self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
+        self.G_cal_setting = self.G_cal_setting
+        print("G_cal_settingggggggggg:", self.G_cal_setting)
 
     def update_scale(self, state):
         """Toggle linear/logarithmic scale and reload data."""
@@ -2045,7 +2047,7 @@ class SelectCalibrationTab:
         """Update calibration data type and visibility of denomination."""
         if data_type == "charge carrier density":
             self.G_cal_setting = 1
-            self.G_carrier_type = "B"  # Default for charge carrier densityy
+            self.G_carrier_type = "B" # Default for charge carrier densityy
         elif data_type == "resistivity":
             self.G_cal_setting = 2
             self.G_carrier_type = "P"  # Default for resistivity
@@ -2100,7 +2102,7 @@ class SelectCalibrationTab:
             self.ui.rightMinLabel_2.setText(f"{self.borders_data[0] * 1e-6:.3f} mm")
             self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0] * 1e-6:.2f}")
             self.update_slider_label_position(self.ui.leftBorderSlider_2, self.ui.leftSliderValueLabel_2, value)
-    
+            self.main_window.alignment_tab.reset_calibration_state()
             # Enable the apply parameters button
             self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
     
@@ -2118,7 +2120,8 @@ class SelectCalibrationTab:
             self.borders_data[1] = right_border
             if not self.data_is_flipped:
                 self.original_borders_data[1] = self.borders_data[1]
-    
+            
+            self.main_window.alignment_tab.reset_calibration_state()
             # Update labels
             self.ui.leftMaxLabel_2.setText(f"{self.borders_data[1] * 1e-6:.3f} mm")
             self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1] * 1e-6:.2f}")
@@ -2134,6 +2137,8 @@ class SelectCalibrationTab:
         """Update G_number_of_steps from Nb_steps_spinBox and enable apply button."""
         self.G_number_of_steps = max(1, int(value))  # Ensure >= 1
         print(f"Number of steps updated: {self.G_number_of_steps}")
+        self.main_window.alignment_tab.reset_calibration_state()
+
         self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
 
     def update_step_distance(self, text):
@@ -2150,6 +2155,8 @@ class SelectCalibrationTab:
                 print(f"Invalid step distance input: {text}, keeping previous value: {self.G_step_distance}")
         else:
             print(f"Empty step distance input, keeping previous value: {self.G_step_distance}")
+        
+        self.main_window.alignment_tab.reset_calibration_state()
         self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
 
     def reset_data_window(self):
@@ -2365,8 +2372,30 @@ class SelectCalibrationTab:
         self.update_step_distance(self.ui.Min_Step_LineEdit.text())
         self.redraw_data_preview()
         QMessageBox.information(self.main_window, "Success", "Parameters applied!")
-        self.ui.apply_parameters_calib_tab_Button.setEnabled(False)
+        #self.ui.apply_parameters_calib_tab_Button.setEnabled(False)
         self.main_window.alignment_tab.reset_calibration_state()
+
+    def draw_ylabel(self, ax, quantity="Calibration"):
+        """Set y-label for the plot based on calibration settings."""
+        if quantity == "Calibration":
+            if self.G_cal_setting == 1:
+                # Use p-type or n-type based on G_carrier_type
+                carrier_label = "p-type" if self.G_carrier_type == "B" else "n-type"
+                identifier = f"{carrier_label} charge carrier concentration"
+                unit = "cm$^{-3}$"
+            elif self.G_cal_setting == 2:
+                identifier = "SRP measured resistivity ρ"
+                unit = "Ωcm"
+            elif self.G_cal_setting == 3:
+                ax.set_ylabel(self.denomination)
+                return
+            if not self.scale_cal_data:  # Log scale if scale_cal_data is False
+                label = f"{identifier} [$log_{{10}}$({unit})]"
+            else:
+                label = f"{identifier} [{unit}]"
+        else:  # Not implemented for measurement data in this context
+            label = "Unspecified"
+        ax.set_ylabel(label, fontsize=10)
     
     def redraw_data_preview(self):
         """Redraw the data preview plot with borders, flip state, grid, and red bars."""
@@ -2401,10 +2430,11 @@ class SelectCalibrationTab:
     
             # Label the axes
             ax.set_xlabel("Depth [mm]")
-            ax.set_ylabel(
-                f"{self.G_carrier_type} Density [$log_{{10}}$(cm$^{{-3}}$)]"
-                if self.G_cal_setting == 1 else "Resistivity [$Ω⋅cm$]"
-            )
+            #ax.set_ylabel(
+            #    f"{self.G_carrier_type} Density [$log_{{10}}$(cm$^{{-3}}$)]"
+            #    if self.G_cal_setting == 1 else "Resistivity [$Ω⋅cm$]"
+            #)
+            self.draw_ylabel(ax, quantity="Calibration")
             ax.grid(True)
     
         # Draw the updated canvas
