@@ -1,7 +1,22 @@
-```markdown
 # CalibGuiPyQt
 
+**CalibGuiPyQt** is a Python application built with PyQt for calibration and alignment of measurement data. It provides a graphical user interface (GUI) for importing measurement and calibration files, performing alignment, selecting fit points, and generating calibration curves. The application is designed for researchers and engineers working with data calibration tasks, offering both automatic and manual modes for precise control.
 
+## Table of Contents
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [File Structure](#file-structure)
+- [Modifying the GUI with Qt Designer](#modifying-the-gui-with-qt-designer)
+- [Dependencies](#dependencies)
+- [License](#license)
+
+## Features
+- Import measurement and calibration data files.
+- Perform automatic or manual alignment of data.
+- Select fit points for calibration curve generation.
+- Visualize alignment and calibration results with Matplotlib plots.
+- Customizable GUI designed with Qt Designer.
 
 ## Installation
 To set up the project locally, follow these steps:
@@ -114,27 +129,3 @@ The application requires the following Python packages with specific versions:
 
 These are installed via the commands in the [Installation](#installation) section.
 
-## License
-This project is licensed under the MIT License. See the `LICENSE` file for details.
-```
-
-### Instructions
-1. **Copy the Content**:
-   - Copy the entire Markdown text above (from `# CalibGuiPyQt` to the end).
-2. **Create README.md**:
-   - In your `CalibGuiPyQt` repository root, create a file named `README.md`.
-   - Paste the copied content into `README.md` and save.
-3. **Upload to GitHub**:
-   - Add and commit the file:
-     ```bash
-     git add README.md
-     git commit -m "Add README file"
-     git push origin main
-     ```
-   - Or, in GitHub's web interface:
-     - Click "Add file" → "Create new file".
-     - Name it `README.md`, paste the content, and commit.
-4. **Verify**:
-   - Visit your repository on GitHub to ensure the README renders with proper headings, code blocks, and formatting.
-
-This single file is ready to use and includes all the requested design elements (headings, code blocks, lists) with default Markdown styling for clean rendering on GitHub.
