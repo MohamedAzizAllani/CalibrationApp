@@ -34,15 +34,15 @@ To set up the project locally, follow these steps:
      ```
    - Run the main script:
      ```bash
+     conda activate calibration_pyqt
+     ```     
+   - Run the main script:
+     ```bash
      python main.py
      ```
    - The GUI will launch, allowing you to import data, align measurements, select fit points, and visualize calibration results.
 
-2. **Interacting with the GUI**:
-   - Use the **Import Measurement Tab** to load measurement data.
-   - Use the **Select Calibration Tab** to load calibration data.
-   - Perform alignment in the **Alignment Tab** (automatic or manual modes).
-   - Select fit points in the **Fitpoints Tab** and generate calibration curves in the **Calibration Tab**.
+
 
 ## File Structure
 The repository is organized as follows:
@@ -66,7 +66,7 @@ CalibGuiPyQt/
 - **`main.py`**: The main script that initializes and runs the PyQt application, loading the GUI and connecting all tabs.
 - **`ui/`**: Contains `.ui` files created with Qt Designer, defining the GUI layout.
 - **`generated_ui/`**: Stores Python files generated from `.ui` files using `pyuic5`.
-- **`app/`**: Contains modular Python scripts for the application's core functionality, including data import, alignment, fit point selection, and calibration.
+- **`app/`**: Contains modular Python scripts for the application's core functionality(import measurement tab ...)
 
 ## Modifying the GUI with Qt Designer
 To customize the GUI, you can edit the `main_window.ui` file using Qt Designer:
@@ -94,20 +94,7 @@ To customize the GUI, you can edit the `main_window.ui` file using Qt Designer:
 4. **Run the Application**:
    - Run `python main.py` to test the modified GUI.
 
-**Note**: Ensure the `enabled` property is set to `True` for `QGroupBox` and its child widgets in Qt Designer to keep them interactable.
 
-## Dependencies
-The application requires the following Python packages with specific versions:
-- `python==3.7`
-- `pyqt`
-- `pyqt5-tools`
-- `numpy==1.16.4`
-- `pandas==0.24.2`
-- `scipy==1.2.1`
-- `matplotlib==3.1.0`
-- `gwyfile==0.2.0`
-- `pynverse==0.1.4.4`
-- `openpyxl==2.6.2`
 
-These are installed via the commands in the [Installation](#installation) section.
+
 
