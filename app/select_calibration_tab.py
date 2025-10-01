@@ -2100,7 +2100,7 @@ class SelectCalibrationTab:
     
             # Update labels
             self.ui.rightMinLabel_2.setText(f"{self.borders_data[0] * 1e-6:.3f} mm")
-            self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0] * 1e-6:.2f}")
+            self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0] * 1e-6:.3f}")
             self.update_slider_label_position(self.ui.leftBorderSlider_2, self.ui.leftSliderValueLabel_2, value)
             self.main_window.alignment_tab.reset_calibration_state()
             # Enable the apply parameters button
@@ -2124,7 +2124,7 @@ class SelectCalibrationTab:
             self.main_window.alignment_tab.reset_calibration_state()
             # Update labels
             self.ui.leftMaxLabel_2.setText(f"{self.borders_data[1] * 1e-6:.3f} mm")
-            self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1] * 1e-6:.2f}")
+            self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1] * 1e-6:.3f}")
             self.update_slider_label_position(self.ui.rightBorderSlider_2, self.ui.rightSliderValueLabel_2, value)
     
             # Enable the apply parameters button
@@ -2191,8 +2191,8 @@ class SelectCalibrationTab:
             self.ui.leftMaxLabel_2.setText(f"{max_val * 1e-6:.3f} mm")
             self.ui.rightMinLabel_2.setText(f"{min_val * 1e-6:.3f} mm")
             self.ui.rightMaxLabel_2.setText(f"{max_val * 1e-6:.3f} mm")
-            self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0] * 1e-6:.2f}")
-            self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1] * 1e-6:.2f}")
+            self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0] * 1e-6:.3f}")
+            self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1] * 1e-6:.3f}")
     
             # Set slider positions
             self.update_slider_label_position(self.ui.leftBorderSlider_2, self.ui.leftSliderValueLabel_2, int((self.borders_data[0] - min_val) / 0.01))

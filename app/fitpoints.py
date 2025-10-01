@@ -150,13 +150,24 @@ class FitpointsTab:
         self.ui.Nbr_of_points_spinBox.setVisible(True)
         self.ui.include_left_edge_as_anchor_checkBox.setVisible(True)
         self.ui.include_right_edge_as_anchor_checkBox.setVisible(True)
+        #self.ui.automatic_label.setVisible(True)
+        self.ui.Nbr_of_point_label.setVisible(True)
+        self.ui.Min_distance_between_steps_label.setVisible(True)
+        self.ui.include_left_edge_as_anchor_label.setVisible(True)
+        self.ui.include_right_edge_as_anchor_label.setVisible(True)
         self.ui.Add_pushButton.setVisible(False)
+        self.ui.addachoratvalue_horizontalSlider.setVisible(False)
+        self.ui.Add_anchor_at_Value_label.setVisible(False)
+        #self.ui.manual_label.setVisible(False)
         self.ui.Undo_pushButton.setVisible(False)
         self.ui.Delete_all_pushButton.setVisible(False)
         self.hide_reveal_slider_row(self.G_fit_num)
         self.ui.Fit_go_pushButton.setStyleSheet("background-color: yellow; color: black")
+        # Highlight automatic button, reset manual button
+        self.ui.Find_fitpoints_Automatically_pushButton.setStyleSheet("background-color: black; color: white; border: 2px solid darkgreen;")
+        self.ui.Manually_select_fitpoints_pushButton.setStyleSheet("background-color: lightgray; color: black; border: 1px solid gray;")
         print("PyQt - Switched to automatic mode")
-
+    
     def set_manual_mode(self):
         """Set manual fit mode and hide sliders."""
         self.G_fit_Mode = self.fit_settings_selection[1]
@@ -164,11 +175,22 @@ class FitpointsTab:
         self.ui.Nbr_of_points_spinBox.setVisible(False)
         self.ui.include_left_edge_as_anchor_checkBox.setVisible(False)
         self.ui.include_right_edge_as_anchor_checkBox.setVisible(False)
+        #self.ui.automatic_label.setVisible(False)
+        self.ui.Nbr_of_point_label.setVisible(False)
+        self.ui.Min_distance_between_steps_label.setVisible(False)
+        self.ui.include_left_edge_as_anchor_label.setVisible(False)
+        self.ui.include_right_edge_as_anchor_label.setVisible(False)
+        self.ui.addachoratvalue_horizontalSlider.setVisible(True)
+        self.ui.Add_anchor_at_Value_label.setVisible(True)
+        #self.ui.manual_label.setVisible(True)
         self.ui.Add_pushButton.setVisible(True)
         self.ui.Undo_pushButton.setVisible(True)
         self.ui.Delete_all_pushButton.setVisible(True)
         self.hide_reveal_slider_row(1)  # Hide all sliders
         self.ui.Fit_go_pushButton.setStyleSheet("background-color: yellow; color: black")
+        # Highlight manual button, reset automatic button
+        self.ui.Manually_select_fitpoints_pushButton.setStyleSheet("background-color: black; color: white; border: 2px solid darkgreen;")
+        self.ui.Find_fitpoints_Automatically_pushButton.setStyleSheet("background-color: lightgray; color: black; border: 1px solid gray;")
         print("PyQt - Switched to manual mode")
 
     def hide_reveal_slider_row(self, num):
@@ -644,23 +666,23 @@ class FitpointsTab:
         self.main_window.calibration_tab.figure_calibration_curve.clear()
         ax3 = self.main_window.calibration_tab.figure_calibration_curve.add_subplot(111)
         self.main_window.calibration_tab.redraw_calibration_curve_init(ax3, X_cal, Y_cal, Y_plateaus_dat, Y_plateaus_cal, mode="Calibration")
-        k = 0
-        for i in range(len(X_plateaus_cal)):
-            if (i == 0 and self.fit_includeleft) or (i == len(X_plateaus_cal) - 1 and self.fit_includeright):
-                ax3.scatter(np.power(10., Y_plateaus_dat[i]), np.power(10., Y_plateaus_cal[i]), 
-                            marker='*', fc='r', s=117, zorder=1)
-                print(f"PyQt - Red star (edge, curve): x={np.power(10., Y_plateaus_dat[i]):.3f}, y={np.power(10., Y_plateaus_cal[i]):.3f}")
-            else:
-                ax3.scatter(np.power(10., Y_plateaus_dat[i]), np.power(10., Y_plateaus_cal[i]), 
-                            marker='*', fc='k', s=117, zorder=1)
-                print(f"PyQt - Black star (curve): x={np.power(10., Y_plateaus_dat[i]):.3f}, y={np.power(10., Y_plateaus_cal[i]):.3f}")
-            if i < len(self.G_fitpoints) and self.G_fitpoints[i] != 0 and i < len(X_plateaus_cal) - 1:
-                for _ in range(self.G_fitpoints[i]):
-                    k += 1
-                    if i + k < len(Y_plateaus_cal):
-                        ax3.scatter(np.power(10., Y_plateaus_dat[i + k]), np.power(10., Y_plateaus_cal[i + k]), 
-                                    marker='*', fc='darkblue', s=70, zorder=1)
-                        print(f"PyQt - Dark blue star (curve, i={i}, k={k}): x={np.power(10., Y_plateaus_dat[i + k]):.3f}, y={np.power(10., Y_plateaus_cal[i]):.3f}")
+        #k = 0
+        #for i in range(len(X_plateaus_cal)):
+        #    if (i == 0 and self.fit_includeleft) or (i == len(X_plateaus_cal) - 1 and self.fit_includeright):
+        #        ax3.scatter(np.power(10., Y_plateaus_dat[i]), np.power(10., Y_plateaus_cal[i]), 
+        #                    marker='*', fc='r', s=117, zorder=1)
+        #        print(f"PyQt - Red star (edge, curve): x={np.power(10., Y_plateaus_dat[i]):.3f}, y={np.power(10., Y_plateaus_cal[i]):.3f}")
+        #    else:
+        #        ax3.scatter(np.power(10., Y_plateaus_dat[i]), np.power(10., Y_plateaus_cal[i]), 
+        #                    marker='*', fc='k', s=117, zorder=1)
+        #        print(f"PyQt - Black star (curve): x={np.power(10., Y_plateaus_dat[i]):.3f}, y={np.power(10., Y_plateaus_cal[i]):.3f}")
+        #    if i < len(self.G_fitpoints) and self.G_fitpoints[i] != 0 and i < len(X_plateaus_cal) - 1:
+        #        for _ in range(self.G_fitpoints[i]):
+        #            k += 1
+        #            if i + k < len(Y_plateaus_cal):
+        #                ax3.scatter(np.power(10., Y_plateaus_dat[i + k]), np.power(10., Y_plateaus_cal[i + k]), 
+        #                            marker='*', fc='darkblue', s=70, zorder=1)
+        #                print(f"PyQt - Dark blue star (curve, i={i}, k={k}): x={np.power(10., Y_plateaus_dat[i + k]):.3f}, y={np.power(10., Y_plateaus_cal[i]):.3f}")
                         
         self.draw_ylabel(Quantity="Calibration", is_log=not self.main_window.select_calibration_tab.scale_cal_data, figure=self.main_window.calibration_tab.figure_calibration_curve)
         self.draw_xlabel(Quantity="Data",is_log=False)

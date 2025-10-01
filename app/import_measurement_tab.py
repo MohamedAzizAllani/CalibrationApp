@@ -62,6 +62,7 @@ class ImportMeasurementTab:
             self.last_directory = os.path.dirname(file_path)
             self.settings.setValue("last_directory", self.last_directory)
             self.ui.measurementLineEdit.setText(file_path)
+            self.ui.flipDataCheckBox.setChecked(False)
             self.import_data(file_path)
             self.main_window.alignment_tab.reset_data_state()
 

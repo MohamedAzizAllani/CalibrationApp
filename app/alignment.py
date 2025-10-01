@@ -213,19 +213,36 @@ class AlignmentTab:
             raise SystemExit(1)
 
         # Initialize G_alignment_fine_iterations
-        self.G_alignment_fine_iterations = 50  # Default value from PySimpleGUI
-        #try:
-        #    self.G_alignment_fine_iterations = int(self.ui.fine_alignement_lineedit.text())
-        #    print(f"PyQt - AlignmentTab: G_alignment_fine_iterations set to {self.G_alignment_fine_iterations}")
-        #except AttributeError:
-        #    print(f"Warning: fine_alignment_lineedit not found, using default G_alignment_fine_iterations={self.G_alignment_fine_iterations}")
-        #except ValueError:
-        #    print(f"Warning: Invalid value in fine_alignment_lineedit, using default G_alignment_fine_iterations={self.G_alignment_fine_iterations}")
+        self.G_alignment_fine_iterations = 50  # Default value
+        try:
+            value = self.ui.fine_alignement_lineedit.text()
+            if value:  # Check if the text is not empty
+                self.G_alignment_fine_iterations = int(value)
+            print(f"PyQt - AlignmentTab: G_alignment_fine_iterations initialized to {self.G_alignment_fine_iterations}")
+        except AttributeError:
+            print(f"Warning: fine_alignement_lineedit not found, using default G_alignment_fine_iterations={self.G_alignment_fine_iterations}")
+        except ValueError:
+            print(f"Warning: Invalid value in fine_alignement_lineedit, using default G_alignment_fine_iterations={self.G_alignment_fine_iterations}")
+        
+        # Connect textChanged signal
         try:
             self.ui.fine_alignement_lineedit.textChanged.connect(self.update_fine_iterations)
-            self.update_fine_iterations(self.ui.fine_alignement_lineedit.text())
+            self.update_fine_iterations(self.ui.fine_alignement_lineedit.text())  # Initial call
         except AttributeError:
-            print("Warning: fine_alignement_lineedit not found, using default G_alignment_fine_iterations=50")
+            print("Warning: fine_alignement_lineedit not found, signal connection failed, using default G_alignment_fine_iterations=50")
+
+    def update_fine_iterations(self, text):
+        """Update G_alignment_fine_iterations when fine_alignement_lineedit text changes."""
+        try:
+            if text:  # Only update if text is not empty
+                self.G_alignment_fine_iterations = int(text)
+                print(f"PyQt - AlignmentTab: G_alignment_fine_iterations updated to {self.G_alignment_fine_iterations}")
+            else:
+                self.G_alignment_fine_iterations = 50  # Revert to default if empty
+                print(f"PyQt - AlignmentTab: G_alignment_fine_iterations reverted to default {self.G_alignment_fine_iterations}")
+        except ValueError:
+            self.G_alignment_fine_iterations = 50  # Revert to default if invalid
+            print(f"Warning: Invalid value '{text}' in fine_alignement_lineedit, reverted to default G_alignment_fine_iterations={self.G_alignment_fine_iterations}")
 
     def update_searcharea(self, state):
         self.G_alignment_increase_searcharea = bool(state)
@@ -909,6 +926,8 @@ class AlignmentTab:
         X_dat, Y_dat = self.apply_parameters_to_data(self.X_data, self.Y_data, self.borders_data, self.data_is_flipped)
         quality_ = np.copy(self.quality)
         best_fits = np.zeros((2, self.G_alignment_fine_iterations))
+        print(f"PyQt2222 - AlignmentTab: G_alignment_fine_iterations set to****************************************************** {self.G_alignment_fine_iterations}")
+
         for i in range(self.G_alignment_fine_iterations):
             max_index = np.argwhere(quality_ == np.max(quality_))[0]
             best_fits[:, i] = max_index
