@@ -1,23 +1,5 @@
 # CalibGuiPyQt
 
-**CalibGuiPyQt** is a Python application built with PyQt for calibration and alignment of measurement data. It provides a graphical user interface (GUI) for importing measurement and calibration files, performing alignment, selecting fit points, and generating calibration curves. The application is designed for researchers and engineers working with data calibration tasks, offering both automatic and manual modes for precise control.
-
-## Table of Contents
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [File Structure](#file-structure)
-- [Modifying the GUI with Qt Designer](#modifying-the-gui-with-qt-designer)
-- [Dependencies](#dependencies)
-- [License](#license)
-
-## Features
-- Import measurement and calibration data files.
-- Perform automatic or manual alignment of data.
-- Select fit points for calibration curve generation.
-- Visualize alignment and calibration results with Matplotlib plots.
-- Customizable GUI designed with Qt Designer.
-
 ## Installation
 To set up the project locally, follow these steps:
 
