@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter, find_peaks
 
 
-
+# ============================== Calibration Data ============================== #
 
 data_c_npsc1 = np.array([[0.00000000e+00, 7.00971000e+19, 1.04712900e-03],
        [4.71000000e-02, 7.21107000e+19, 1.02070400e-03],
@@ -1742,18 +1742,18 @@ preset_lib = {
 
 
 
-#############################################################################################################################
-#############################################################################################################################
-
+# ---------------------------------------------------------------------
+# SelectCalibrationTab
+# ---------------------------------------------------------------------
 
 class SelectCalibrationTab:
     """Controller for the 'Select Calibration File' tab functionality."""
+
     def __init__(self, ui, main_window):
-        """Initialize the tab with UI elements and data attributes."""
         self.ui = ui
         self.main_window = main_window
-    
-        # Initialize matplotlib figure and canvas
+
+        # Matplotlib canvas
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
         try:
@@ -1761,8 +1761,8 @@ class SelectCalibrationTab:
         except AttributeError as e:
             print(f"Error: {e}. Ensure CalibTab_verticalLayout exists.")
             raise SystemExit(1)
-    
-        # Data attributes
+
+        # Data attributes (unchanged defaults)
         self.X_data = np.array([])
         self.Y_data = np.array([])
         self.X_data_range = np.array([])
@@ -1777,17 +1777,17 @@ class SelectCalibrationTab:
         self.G_carrier_type = "B"
         self.G_step_distance = 0.3
         self.G_number_of_steps = 7
-    
-        # Settings for storing last directory
+
+        # Persist last directory
         self.settings = QSettings("MyApp", "Calibration")
         self.last_directory = self.settings.value("last_directory", "", type=str)
-    
-        # Initialize UI elements
+
+        # UI init
         self.ui.calib_sample_combobox.addItems(["pcal", "pcs1", "npsc2", "npsc1", "ppsc2", "ncal", "CS01", "Own Sample"])
         self.ui.calib_sample_combobox.setCurrentText("pcal")
         self.ui.Calib_Data_Type_comboBox.addItems(["charge carrier density", "resistivity", "Other"])
-        self.ui.Dopant_Type_comboBox.addItems(["P", "As", "B"])  # Add dopant types
-        self.ui.Dopant_type_label.setText("p-type" if self.G_carrier_type == "B" else "n-type")  # Set initial label
+        self.ui.Dopant_Type_comboBox.addItems(["P", "As", "B"])
+        self.ui.Dopant_type_label.setText("p-type" if self.G_carrier_type == "B" else "n-type")
         self.ui.calibration_data_lineEdit.setVisible(False)
         self.ui.browse_button.setVisible(False)
         self.ui.Calibratio_data_label.setVisible(False)
@@ -1803,8 +1803,8 @@ class SelectCalibrationTab:
         self.ui.Calib_Data_Denom_lineEdit.setText(self.denomination)
         self.ui.Nb_steps_spinBox.setValue(self.G_number_of_steps)
         self.ui.Min_Step_LineEdit.setText(str(self.G_step_distance))
-    
-        # Connect signals to slots
+
+        # Signals
         self.ui.calib_sample_combobox.currentTextChanged.connect(self.update_calibration_sample)
         self.ui.Preset_comboBox.currentTextChanged.connect(self.update_preset_from_combo)
         self.ui.browse_button.clicked.connect(self.browse_calibration_file)
@@ -1817,40 +1817,36 @@ class SelectCalibrationTab:
         self.ui.Nb_steps_spinBox.valueChanged.connect(self.update_number_of_steps)
         self.ui.Min_Step_LineEdit.textEdited.connect(self.update_step_distance)
         self.ui.apply_parameters_calib_tab_Button.clicked.connect(self.apply_parameters)
-        self.ui.Dopant_Type_comboBox.currentTextChanged.connect(self.update_dopant_type)  # New connection
-        
-        
-        # Initialize UI
-        #self.update_calibration_sample("pcal")
+        self.ui.Dopant_Type_comboBox.currentTextChanged.connect(self.update_dopant_type)
+
+    # ------------------------------------------------------------------
+    # File I/O
+    # ------------------------------------------------------------------
 
     def browse_calibration_file(self):
-        """Open file dialog to select a calibration file."""
         initial_dir = self.last_directory
         file_path, _ = QFileDialog.getOpenFileName(
             self.main_window, "Select Calibration File", initial_dir, "Text Files (*.txt)"
         )
         if file_path:
-            print(f"Selected file: {file_path}")  # Debug: Log file path
+            print(f"Selected file: {file_path}")
             self.calibration_file = file_path
             self.last_directory = os.path.dirname(file_path)
             self.settings.setValue("last_directory", self.last_directory)
             self.ui.calibration_data_lineEdit.setText(file_path)
             if not self.import_data(file_path):
-                print("Failed to import data from file")  # Debug: Log import failure
+                print("Failed to import data from file")
 
     def import_data(self, path_data):
-        """Import XY data from a text file with various delimiters."""
         print(f"Attempting to load file: {path_data}")
         if not os.path.exists(path_data):
-            print(f"Error: File does not exist: {path_data}")
             QMessageBox.critical(self.main_window, "Error", f"File does not exist: {path_data}")
             return False
         if not os.access(path_data, os.R_OK):
-            print(f"Error: File is not readable: {path_data}")
             QMessageBox.critical(self.main_window, "Error", f"File is not readable: {path_data}")
             return False
-    
-        # Preview first few lines for debugging
+
+        # Preview
         try:
             with open(path_data, 'r') as f:
                 lines = f.readlines()[:5]
@@ -1859,10 +1855,11 @@ class SelectCalibrationTab:
                     print(f"Line {i+1}: {line.strip()}")
         except Exception as e:
             print(f"Error reading file preview: {str(e)}")
-    
+
         successful_data_import = False
         data = None
-        # Try whitespace delimiter first (handles multiple spaces/tabs)
+
+        # Try whitespace delimiter first
         try:
             print("Trying delimiter: auto (whitespace)")
             data = np.loadtxt(path_data, delimiter=None, skiprows=1, usecols=(0, 1))
@@ -1872,8 +1869,8 @@ class SelectCalibrationTab:
             successful_data_import = True
         except Exception as e:
             print(f"Failed with auto delimiter: {str(e)}")
-    
-        # Fallback to other delimiters if needed
+
+        # Fallback to other delimiters
         if not successful_data_import:
             for delim in self.G_data_separators:
                 print(f"Trying delimiter: '{delim}'")
@@ -1887,26 +1884,29 @@ class SelectCalibrationTab:
                 except Exception as e:
                     print(f"Failed with delimiter '{delim}': {str(e)}")
                     continue
-    
+
         if successful_data_import:
             try:
                 if not np.all(np.isfinite(data)):
                     raise ValueError("Data contains non-numeric or invalid values")
                 data[:, 0] = data[:, 0] * 1e6  # Convert X to µm
-                X = data[:, 0] - np.min(data[:, 0])  # Normalize X to start at 0
+                X = data[:, 0] - np.min(data[:, 0])
                 Y = data[:, 1]
                 if X.size < 2 or Y.size < 2:
                     raise ValueError(f"Data has too few points: X={X.size}, Y={Y.size}")
+
                 X_range = np.abs(X[-1] - X[0])
                 print(f"X range: {X_range} µm")
-                while X_range < 0.1:  # Ensure reasonable range
+                while X_range < 0.1:  # Scale tiny ranges
                     X = X * 1e3
                     X = X - np.min(X)
                     X_range = np.abs(X[-1] - X[0])
                     print(f"Scaled X range: {X_range} µm")
+
                 if not self.scale_cal_data:
                     Y = np.where(Y > 0, np.log10(Y), np.nan)
                     print(f"Y data after log scale: min={np.nanmin(Y)}, max={np.nanmax(Y)}")
+
                 self.X_data = X
                 self.Y_data = Y
                 self.X_data_range = X.copy()
@@ -1917,7 +1917,6 @@ class SelectCalibrationTab:
                 self.reset_data_window()
                 self.redraw_data_preview()
                 self.path_data = path_data
-                print("Data imported successfully")
                 QMessageBox.information(self.main_window, "Success", "Calibration data imported successfully!")
                 return True
             except Exception as e:
@@ -1925,9 +1924,12 @@ class SelectCalibrationTab:
                 QMessageBox.critical(self.main_window, "Error", f"Calibration data cannot be read: {str(e)}")
                 return False
         else:
-            print("Error: Failed to read file with any delimiter")
             QMessageBox.critical(self.main_window, "Error", "Calibration data cannot be read: No valid delimiter found")
             return False
+
+    # ------------------------------------------------------------------
+    # UI updates / presets
+    # ------------------------------------------------------------------
 
     def update_calibration_sample(self, sample):
         """Update UI based on calibration sample selection."""
@@ -1936,10 +1938,13 @@ class SelectCalibrationTab:
             self.ui.Preset_comboBox.addItems(["Charge carriers -- default"])
         else:
             self.ui.Preset_comboBox.addItems(["Charge carriers -- default", "Resistivity -- default"])
+
         is_own_sample = sample == "Own Sample"
         self.ui.Preset_label.setVisible(not is_own_sample)
         self.ui.Preset_comboBox.setVisible(not is_own_sample)
-        self.ui.Calibratio_data_label.setVisible(is_own_sample)  # Fixed typo
+
+        # Own sample fields
+        self.ui.Calibratio_data_label.setVisible(is_own_sample)
         self.ui.calibration_data_lineEdit.setVisible(is_own_sample)
         self.ui.browse_button.setVisible(is_own_sample)
         self.ui.Raw_data_linear_scale.setVisible(is_own_sample)
@@ -1949,31 +1954,30 @@ class SelectCalibrationTab:
         self.ui.Calib_Data_Type_label.setVisible(is_own_sample)
         self.ui.Calib_Data_Denom_label.setVisible(is_own_sample)
         self.ui.Calib_Data_Denom_lineEdit.setVisible(is_own_sample)
-
         self.ui.Dopant_Type_label.setVisible(is_own_sample)
         self.ui.Dopant_Type_comboBox.setVisible(is_own_sample)
         self.ui.Dopant_type_label.setVisible(is_own_sample)
+
         self.ui.apply_parameters_calib_tab_Button.setEnabled(False)
+
         if not is_own_sample:
             self.ui.Preset_comboBox.setCurrentText("Charge carriers -- default")
             self.update_preset_from_combo("Charge carriers -- default")
         else:
             self.ui.Calib_Data_Type_comboBox.setCurrentText("charge carrier density")
-        self.ui.Nb_steps_spinBox.setValue(self.G_number_of_steps)  # Update spin box
-        self.ui.Min_Step_LineEdit.setText(str(self.G_step_distance))  # Update line edit
+
+        self.ui.Nb_steps_spinBox.setValue(self.G_number_of_steps)
+        self.ui.Min_Step_LineEdit.setText(str(self.G_step_distance))
+
         self.redraw_data_preview()
         self.main_window.alignment_tab.reset_calibration_state()
 
-    
     def update_preset_from_combo(self, preset_name):
-        """Wrapper to pass sample and preset_name to update_preset."""
         sample = self.ui.calib_sample_combobox.currentText()
         self.main_window.alignment_tab.reset_calibration_state()
         self.update_preset(sample, preset_name)
-        
-    
+
     def update_preset(self, sample, preset_name):
-        """Load preset settings and data, updating stretch sliders in AlignmentTab."""
         if sample not in preset_lib or preset_name not in preset_lib[sample]:
             return
         preset = preset_lib[sample][preset_name]
@@ -1984,8 +1988,7 @@ class SelectCalibrationTab:
         self.G_carrier_type = preset["-dopant_type-"]
         self.G_step_distance = preset["-step_distance-"]
         self.G_number_of_steps = preset["-num_steps-"]
-        # Set path_data for preset samples
-        #self.path_data = f"preset_{sample}_{preset_name}"  # Unique identifier for preset
+
         if sample != "Own Sample":
             if self.G_cal_setting == 1:
                 data = data_lib[sample]["data_cc"]
@@ -1993,7 +1996,8 @@ class SelectCalibrationTab:
                 data = data_lib[sample]["data_res"]
             else:
                 data = data_lib[sample]["data_cc"]
-            X = data[:, 0] * 1e6  # Convert to µm
+
+            X = data[:, 0] * 1e6
             X = X - np.min(X)
             Y = data[:, 1]
             X_range = np.abs(X[-1] - X[0])
@@ -2003,11 +2007,13 @@ class SelectCalibrationTab:
                 X_range = np.abs(X[-1] - X[0])
             if not self.scale_cal_data:
                 Y = np.where(Y > 0, np.log10(Y), np.nan)
+
             self.X_data = X
             self.Y_data = Y
             self.X_data_range = X.copy()
             self.borders_data = [X[0], X[-1]]
             self.original_borders_data = self.borders_data.copy()
+
         self.ui.Flip_Data_Checkbox.setChecked(self.data_is_flipped)
         self.ui.Calib_Data_Type_comboBox.setCurrentText(
             "charge carrier density" if self.G_cal_setting == 1 else
@@ -2019,7 +2025,8 @@ class SelectCalibrationTab:
         self.ui.Dopant_type_label.setText("p-type" if self.G_carrier_type == "B" else "n-type")
         self.ui.Nb_steps_spinBox.setValue(self.G_number_of_steps)
         self.ui.Min_Step_LineEdit.setText(str(self.G_step_distance))
-        # Update stretch sliders in AlignmentTab
+
+        # Push stretch preset to Alignment tab (best effort)
         try:
             stretch_values = preset["-stretch-"]
             alignment_tab = self.main_window.alignment_tab
@@ -2028,6 +2035,7 @@ class SelectCalibrationTab:
             print(f"Stretch sliders updated: min={stretch_values[0]}, max={stretch_values[1]}")
         except AttributeError as e:
             print(f"Error updating stretch sliders: {e}. Ensure main_window.alignment_tab exists.")
+
         self.reset_data_window()
         self.redraw_data_preview()
         self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
@@ -2035,7 +2043,6 @@ class SelectCalibrationTab:
         print("G_cal_settingggggggggg:", self.G_cal_setting)
 
     def update_scale(self, state):
-        """Toggle linear/logarithmic scale and reload data."""
         self.scale_cal_data = state == Qt.Checked
         if self.ui.calib_sample_combobox.currentText() == "Own Sample" and self.calibration_file:
             self.import_data(self.calibration_file)
@@ -2044,24 +2051,23 @@ class SelectCalibrationTab:
         self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
 
     def update_data_type(self, data_type):
-        """Update calibration data type and visibility of denomination."""
         if data_type == "charge carrier density":
             self.G_cal_setting = 1
-            self.G_carrier_type = "B" # Default for charge carrier densityy
+            self.G_carrier_type = "B"
         elif data_type == "resistivity":
             self.G_cal_setting = 2
-            self.G_carrier_type = "P"  # Default for resistivity
+            self.G_carrier_type = "P"
         else:
             self.G_cal_setting = 3
-            self.G_carrier_type = "P"  # Default for other
+            self.G_carrier_type = "P"
+
         self.ui.Calib_Data_Denom_lineEdit.setVisible(self.G_cal_setting == 3)
-        self.ui.Dopant_Type_comboBox.setCurrentText(self.G_carrier_type)  # Update combo box
-        self.ui.Dopant_type_label.setText("p-type" if self.G_carrier_type == "B" else "n-type")  # Update label
+        self.ui.Dopant_Type_comboBox.setCurrentText(self.G_carrier_type)
+        self.ui.Dopant_type_label.setText("p-type" if self.G_carrier_type == "B" else "n-type")
         self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
         self.redraw_data_preview()
- 
+
     def update_dopant_type(self, dopant_type):
-        """Update G_carrier_type and Dopant_type_label based on Dopant_Type_comboBox."""
         self.G_carrier_type = dopant_type
         self.ui.Dopant_type_label.setText("p-type" if dopant_type == "B" else "n-type")
         print(f"Dopant type updated: {self.G_carrier_type}, Label: {self.ui.Dopant_type_label.text()}")
@@ -2069,13 +2075,15 @@ class SelectCalibrationTab:
         self.redraw_data_preview()
 
     def update_denomination(self, text):
-        """Update denomination for 'Other' data type."""
         self.denomination = text
         self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
         self.redraw_data_preview()
 
+    # ------------------------------------------------------------------
+    # Sliders / borders
+    # ------------------------------------------------------------------
+
     def update_slider_label_position(self, slider, label, value):
-        """Update the position of a slider's value label to follow the handle."""
         min_val = slider.minimum()
         max_val = slider.maximum()
         slider_width = slider.width()
@@ -2086,64 +2094,39 @@ class SelectCalibrationTab:
             label.setGeometry(x_offset - 30, label.y(), 60, 20)
 
     def change_left_border(self, value):
-        """Update left border based on slider value in steps of 0.01."""
         if self.X_data.size > 0:
             min_val = min(self.X_data)
-    
-            # Map slider value to dataset range
             left_border = min_val + value * 0.01
-    
-            # Apply updated left border
             self.borders_data[0] = left_border
             if not self.data_is_flipped:
                 self.original_borders_data[0] = self.borders_data[0]
-    
-            # Update labels
             self.ui.rightMinLabel_2.setText(f"{self.borders_data[0] * 1e-6:.3f} mm")
             self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0] * 1e-6:.3f}")
             self.update_slider_label_position(self.ui.leftBorderSlider_2, self.ui.leftSliderValueLabel_2, value)
             self.main_window.alignment_tab.reset_calibration_state()
-            # Enable the apply parameters button
             self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
-    
 
-    
     def change_right_border(self, value):
-        """Update right border based on slider value in steps of 0.01."""
         if self.X_data.size > 0:
             min_val = min(self.X_data)
-    
-            # Map slider value to dataset range
             right_border = min_val + value * 0.01
-    
-            # Apply updated right border
             self.borders_data[1] = right_border
             if not self.data_is_flipped:
                 self.original_borders_data[1] = self.borders_data[1]
-            
             self.main_window.alignment_tab.reset_calibration_state()
-            # Update labels
             self.ui.leftMaxLabel_2.setText(f"{self.borders_data[1] * 1e-6:.3f} mm")
             self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1] * 1e-6:.3f}")
             self.update_slider_label_position(self.ui.rightBorderSlider_2, self.ui.rightSliderValueLabel_2, value)
-    
-            # Enable the apply parameters button
             self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
-    
-    
-            
-    
+
     def update_number_of_steps(self, value):
-        """Update G_number_of_steps from Nb_steps_spinBox and enable apply button."""
-        self.G_number_of_steps = max(1, int(value))  # Ensure >= 1
+        self.G_number_of_steps = max(1, int(value))
         print(f"Number of steps updated: {self.G_number_of_steps}")
         self.main_window.alignment_tab.reset_calibration_state()
-
         self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
 
     def update_step_distance(self, text):
-        """Update G_step_distance from Min_Step_LineEdit for valid input."""
-        if text.strip():  # Only process non-empty input
+        if text.strip():
             try:
                 step_distance = float(text)
                 if step_distance > 0:
@@ -2155,184 +2138,158 @@ class SelectCalibrationTab:
                 print(f"Invalid step distance input: {text}, keeping previous value: {self.G_step_distance}")
         else:
             print(f"Empty step distance input, keeping previous value: {self.G_step_distance}")
-        
+
         self.main_window.alignment_tab.reset_calibration_state()
         self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
 
     def reset_data_window(self):
-        """Reset sliders to fixed steps of 0.01."""
         if self.X_data.size > 0:
             min_val = min(self.X_data)
             max_val = max(self.X_data)
-    
-            # Total slider steps for 0.01 increments
             slider_steps = int((max_val - min_val) / 0.01)
-    
-            # Configure left border slider
+
             self.ui.leftBorderSlider_2.setMinimum(0)
             self.ui.leftBorderSlider_2.setMaximum(slider_steps)
-            self.ui.leftBorderSlider_2.setSingleStep(1)  # Each step corresponds to 0.01 in the dataset
+            self.ui.leftBorderSlider_2.setSingleStep(1)
             self.ui.leftBorderSlider_2.setPageStep(10)
             self.ui.leftBorderSlider_2.setValue(int((self.borders_data[0] - min_val) / 0.01))
-            #self.ui.leftBorderSlider_2.setTickPosition(QSlider.TicksBothSides)
-            #self.ui.leftBorderSlider_2.setTickInterval(slider_steps // 10)
-    
-            # Configure right border slider
+            # self.ui.leftBorderSlider_2.setTickPosition(QSlider.TicksBothSides)
+            # self.ui.leftBorderSlider_2.setTickInterval(slider_steps // 10)
+
             self.ui.rightBorderSlider_2.setMinimum(0)
             self.ui.rightBorderSlider_2.setMaximum(slider_steps)
-            self.ui.rightBorderSlider_2.setSingleStep(1)  # Each step corresponds to 0.01 in the dataset
+            self.ui.rightBorderSlider_2.setSingleStep(1)
             self.ui.rightBorderSlider_2.setPageStep(10)
             self.ui.rightBorderSlider_2.setValue(int((self.borders_data[1] - min_val) / 0.01))
-            #self.ui.rightBorderSlider_2.setTickPosition(QSlider.TicksBothSides)
-            #self.ui.rightBorderSlider_2.setTickInterval(slider_steps // 10)
-    
-            # Update labels
+            # self.ui.rightBorderSlider_2.setTickPosition(QSlider.TicksBothSides)
+            # self.ui.rightBorderSlider_2.setTickInterval(slider_steps // 10)
+
             self.ui.leftMinLabel_2.setText(f"{min_val * 1e-6:.3f} mm")
             self.ui.leftMaxLabel_2.setText(f"{max_val * 1e-6:.3f} mm")
             self.ui.rightMinLabel_2.setText(f"{min_val * 1e-6:.3f} mm")
             self.ui.rightMaxLabel_2.setText(f"{max_val * 1e-6:.3f} mm")
             self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0] * 1e-6:.3f}")
             self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1] * 1e-6:.3f}")
-    
-            # Set slider positions
-            self.update_slider_label_position(self.ui.leftBorderSlider_2, self.ui.leftSliderValueLabel_2, int((self.borders_data[0] - min_val) / 0.01))
-            self.update_slider_label_position(self.ui.rightBorderSlider_2, self.ui.rightSliderValueLabel_2, int((self.borders_data[1] - min_val) / 0.01))
-    
-    
 
+            self.update_slider_label_position(
+                self.ui.leftBorderSlider_2,
+                self.ui.leftSliderValueLabel_2,
+                int((self.borders_data[0] - min_val) / 0.01)
+            )
+            self.update_slider_label_position(
+                self.ui.rightBorderSlider_2,
+                self.ui.rightSliderValueLabel_2,
+                int((self.borders_data[1] - min_val) / 0.01)
+            )
+
+    # ------------------------------------------------------------------
+    # Flip / transforms
+    # ------------------------------------------------------------------
 
     def flip_dataset(self):
-        """Flip the dataset and update borders, sliders, and labels."""
         if self.X_data.size > 0:
-            max_x = max(self.X_data)  # Maximum X value
-            min_x = min(self.X_data)  # Minimum X value
-    
+            max_x = max(self.X_data)
+            min_x = min(self.X_data)
+
             if self.data_is_flipped:
-                # Flip the dataset
-                self.X_data_range = max_x - (self.X_data - min_x)  # Reverse X axis
+                self.X_data_range = max_x - (self.X_data - min_x)
                 left_border = max_x - (self.original_borders_data[0] - min_x)
                 right_border = max_x - (self.original_borders_data[1] - min_x)
-                # Update borders based on flipped state
                 self.borders_data = [min(left_border, right_border), max(left_border, right_border)]
             else:
-                # Restore dataset to original state (unflipped)
                 self.X_data_range = self.X_data.copy()
                 self.borders_data = self.original_borders_data.copy()
-    
-            # Update sliders and plot
-            self.reset_data_window()  # Adjust sliders and their ranges
-            self.redraw_data_preview()  # Update the plot
-    
+
+            self.reset_data_window()
+            self.redraw_data_preview()
 
     def flip_data(self, state):
-        """Handle flip checkbox state change and update plot."""
         self.data_is_flipped = state == Qt.Checked
         self.flip_dataset()
         self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
         self.redraw_data_preview()
         self.main_window.alignment_tab.reset_calibration_state()
 
-    
+    # ------------------------------------------------------------------
+    # Analysis helpers
+    # ------------------------------------------------------------------
 
     def differentiate_for_peak_finding(self, test_data, filterwidth):
-        """Differentiate data for peak finding, with optional smoothing."""
         if filterwidth != 0:
-            test_data = savgol_filter(test_data, 1 + filterwidth * 2, 1)  # Smooth data
-        # Pad test_data to maintain size after diff
-        test_data = np.diff(test_data, 1, append=test_data[-1])  # Append last value to keep length
+            test_data = savgol_filter(test_data, 1 + filterwidth * 2, 1)
+        test_data = np.diff(test_data, 1, append=test_data[-1])
         non_zero = test_data[np.where(test_data != 0)]
         if non_zero.size == 0:
             print("Warning: All derivatives are zero, returning zeros")
             return np.zeros_like(test_data)
-        test_data = test_data / np.min(np.abs(non_zero))  # Normalize to smallest non-zero
-        test_data = np.abs(test_data)  # Flip to positive for peak detection
+        test_data = test_data / np.min(np.abs(non_zero))
+        test_data = np.abs(test_data)
         return test_data
-    
+
     def find_step_pos(self, X, Y, Mode, fixed_filterwidth=0, variable_set="Alignment"):
-        """Find step positions in calibration data for plateau detection."""
         step_dist = self.G_step_distance
         step_num = self.G_number_of_steps
         x_interval = np.abs(X[-1] - X[0])
-    
+
         if x_interval == 0:
             print("Error: X range is zero, cannot compute steps")
             return None
-    
-        # Calculate required point spacing for peaks
+
         step_distance_pxls = max(int(step_dist / x_interval * X.size), 1)
-    
-        # Smooth and differentiate the data for peak finding
         test_data = self.differentiate_for_peak_finding(Y, filterwidth=fixed_filterwidth)
         print("test_data max:", np.max(test_data))
-    
-        # Detect peaks in the differentiated data
+
         peaks, properties = find_peaks(test_data, distance=step_distance_pxls, height=np.percentile(test_data, 10))
         peak_pos_pxls = list(peaks)
         peak_height = list(properties["peak_heights"])
-    
-        # Enforce step count (required number of steps = step_num - 1)
+
         while len(peak_pos_pxls) > (step_num - 1):
             smallest_peak = peak_height.index(min(peak_height))
             del peak_height[smallest_peak]
             del peak_pos_pxls[smallest_peak]
-    
-        return X[peak_pos_pxls]
-    
 
-    def get_closest_pxl_to_value(arr,val):
-        diff = np.abs(val-arr)
+        return X[peak_pos_pxls]
+
+    def get_closest_pxl_to_value(arr, val):
+        diff = np.abs(val - arr)
         min = np.min(diff)
-        return np.where(diff==min)
-    
+        return np.where(diff == min)
+
     def apply_parameters_to_data(self, X, Y, borders, is_flipped):
-        """Apply borders and optionally flip the dataset for downstream processing."""
         print(f"Applying parameters: borders={borders}, is_flipped={is_flipped}")
-    
-        # Select the flipped or unflipped dataset
         X_out, Y_out = X.copy(), Y.copy()
-    
-        # Ensure the flipped dataset is used
+
         if is_flipped:
             print(f"Using flipped data: X range {np.min(self.X_data_range):.3f} to {np.max(self.X_data_range):.3f}")
-            X_out = self.X_data_range  # Use already flipped dataset
+            X_out = self.X_data_range
         else:
-            X_out = X  # Use the original dataset
-    
-        # Apply borders to trim the dataset
-        borders_adjusted = sorted(borders)  # Ensure valid borders
+            X_out = X
+
+        borders_adjusted = sorted(borders)
         print(f"Adjusted borders: {borders_adjusted}")
-    
+
         indices = np.where((X_out >= borders_adjusted[0]) & (X_out <= borders_adjusted[1]))[0]
         if len(indices) == 0:
             print("Warning: No data within borders")
-            return X_out, Y_out  # Return untrimmed dataset for visualization
-    
-        # Apply borders to trim the dataset
+            return X_out, Y_out
+
         X_out, Y_out = X_out[indices], Y_out[indices]
         print(f"Trimmed Data: X range {np.min(X_out):.3f} to {np.max(X_out):.3f}, "
               f"Y range {np.min(Y_out):.3f} to {np.max(Y_out):.3f}")
-    
         return X_out, Y_out
-    
-
-
-    
 
     def estimate_plateaus(self, X, Y, ax, plot_plateau=True, variable_set="Alignment"):
-        """Estimate plateau positions for red bars."""
         step_dist = self.G_step_distance
         step_pos = self.find_step_pos(X, Y, "automatic Mode", fixed_filterwidth=0, variable_set=variable_set)
         if step_pos is None:
             print("Error: Could not find all required steps!")
             return None, None
-    
-        # Recalculate plateau positions
+
         estimate_plateaus_pos = [(X[0] + step_pos[0]) / 2]
         for i in range(len(step_pos) - 1):
             estimate_plateaus_pos.append((step_pos[i] + step_pos[i + 1]) / 2)
         estimate_plateaus_pos.append((step_pos[-1] + X[-1]) / 2)
-    
-        # Draw bars for plateaus
+
         if plot_plateau:
             y_min, y_max = ax.get_ylim()
             bar_heights = y_max - y_min
@@ -2345,14 +2302,14 @@ class SelectCalibrationTab:
                 color="r",
                 edgecolor="k"
             )
-            #print(f"Plateau positions: {estimate_plateaus_pos}")
             print(f" step_pos={step_pos}")
         return estimate_plateaus_pos, step_pos
 
+    # ------------------------------------------------------------------
+    # Apply + plot
+    # ------------------------------------------------------------------
 
-    
     def apply_parameters(self):
-        """Apply parameters only if step distance is valid, else show error."""
         text = self.ui.Min_Step_LineEdit.text().strip()
         if not text:
             QMessageBox.critical(self.main_window, "Error", "Missing step distance input. Please enter a valid number.")
@@ -2368,18 +2325,16 @@ class SelectCalibrationTab:
             QMessageBox.critical(self.main_window, "Error", "Invalid step distance input. Please enter a valid number.")
             print(f"Apply failed: Invalid step distance: {text}")
             return
+
         self.update_number_of_steps(self.ui.Nb_steps_spinBox.value())
         self.update_step_distance(self.ui.Min_Step_LineEdit.text())
         self.redraw_data_preview()
         QMessageBox.information(self.main_window, "Success", "Parameters applied!")
-        #self.ui.apply_parameters_calib_tab_Button.setEnabled(False)
         self.main_window.alignment_tab.reset_calibration_state()
 
     def draw_ylabel(self, ax, quantity="Calibration"):
-        """Set y-label for the plot based on calibration settings."""
         if quantity == "Calibration":
             if self.G_cal_setting == 1:
-                # Use p-type or n-type based on G_carrier_type
                 carrier_label = "p-type" if self.G_carrier_type == "B" else "n-type"
                 identifier = f"{carrier_label} charge carrier concentration"
                 unit = "cm$^{-3}$"
@@ -2389,37 +2344,30 @@ class SelectCalibrationTab:
             elif self.G_cal_setting == 3:
                 ax.set_ylabel(self.denomination)
                 return
-            if not self.scale_cal_data:  # Log scale if scale_cal_data is False
+            if not self.scale_cal_data:
                 label = f"{identifier} [$log_{{10}}$({unit})]"
             else:
                 label = f"{identifier} [{unit}]"
-        else:  # Not implemented for measurement data in this context
+        else:
             label = "Unspecified"
         ax.set_ylabel(label, fontsize=10)
-    
+
     def redraw_data_preview(self):
-        """Redraw the data preview plot with borders, flip state, grid, and red bars."""
         self.figure.clear()
         print("Canvas size:", self.canvas.size().width(), self.canvas.size().height())
         ax = self.figure.add_subplot(111)
-    
-        # Ensure trimming and flipping are respected
+
         if self.X_data.size > 1:
-            # Apply trimming via borders and optionally flip the dataset
             X_trimmed, Y_trimmed = self.apply_parameters_to_data(
                 self.X_data, self.Y_data, self.borders_data, self.data_is_flipped
             )
-            
-            # Plot the trimmed/processed data
-            ax.plot(X_trimmed * 1e-6 , Y_trimmed, label="Calibration", color="green")
+            ax.plot(X_trimmed * 1e-6, Y_trimmed, label="Calibration", color="green")
             ax.legend()
-    
-            # Detect and plot plateaus using the trimmed/processed data
+
             self.estimate_plateaus(
                 X_trimmed * 1e-6, Y_trimmed, ax, plot_plateau=True, variable_set="Alignment"
             )
-    
-            # Update axis limits dynamically
+
             y_min = np.nanmin(Y_trimmed)
             y_max = np.nanmax(Y_trimmed)
             y_range = y_max - y_min
@@ -2427,16 +2375,9 @@ class SelectCalibrationTab:
             ax.set_ylim(y_mid - (y_range / 2) * 1.03, y_mid + (y_range / 2) * 1.03)
             ax.set_xlim(self.borders_data[0] * 1e-6, self.borders_data[1] * 1e-6)
             print("X-axis limits:", ax.get_xlim())
-    
-            # Label the axes
+
             ax.set_xlabel("Depth [mm]")
-            #ax.set_ylabel(
-            #    f"{self.G_carrier_type} Density [$log_{{10}}$(cm$^{{-3}}$)]"
-            #    if self.G_cal_setting == 1 else "Resistivity [$Ω⋅cm$]"
-            #)
             self.draw_ylabel(ax, quantity="Calibration")
             ax.grid(True)
-    
-        # Draw the updated canvas
+
         self.canvas.draw_idle()
-    
