@@ -64,8 +64,8 @@ CalibGuiPyQt/
 ```
 
 - **`main.py`**: The main script that initializes and runs the PyQt application, loading the GUI and connecting all tabs.
-- **`ui/`**: Contains `.ui` files created with Qt Designer, defining the GUI layout.
-- **`generated_ui/`**: Stores Python files generated from `.ui` files using `pyuic5`.
+- **`ui/`**: Contains `.ui` file created with Qt Designer, defining the GUI layout.
+- **`generated_ui/`**: Stores Python file generated from `.ui` file using `pyuic5`.
 - **`app/`**: Contains modular Python scripts for the application's core functionality(import measurement tab ...)
 
 ## Modifying the GUI with Qt Designer
