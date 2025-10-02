@@ -7,13 +7,55 @@ To set up the project locally, follow these steps:
    - Download the code as a ZIP file from the GitHub repository.
    - Extract the ZIP file to your desired directory.
 
-2. **Set Up the Conda Environment**:
-   - Open a command prompt or terminal.
-   - Create and activate a Conda environment with Python 3.7:
-     ```bash
-     conda create -n calibration_pyqt python=3.7
-     conda activate calibration_pyqt
-     ```
+Réponse A
+
+Réflexion pendant 12s
+markdown
+### 2. Set Up the Conda Environment
+- **Install Miniforge**:
+  - Download the Windows installer for Miniforge from [https://conda-forge.org/download/](https://conda-forge.org/download/).
+  - **Check Installation Path**: If you didn't change the default path, Miniforge installs to `C:\Users\USERNAME\AppData\Local\miniforge3`. To open Miniforge, navigate to this folder and run `Miniforge3 Prompt` or `scripts\activate.bat` in Command Prompt.
+  - For detailed guidance, refer to [Conda-Forge Setup](https://confluencewikiprod.intra.infineon.com/spaces/ANACONDA/pages/1813645274/Conda-Forge).
+
+- **Set Up the Conda Channel**:
+  - The `.condarc` file, created during Miniforge installation or by running `conda config`, specifies where Conda downloads packages. Use Infineon's internal server for security.
+  - Open Command Prompt as Administrator (Windows Key → type `cmd` → right-click → "Run as administrator").
+  - Open `.condarc`:
+notepad C:\Users\USERNAME.condarc
+
+text
+- Ensure it contains only:
+channels:
+
+https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge
+text
+- Save and close Notepad.
+- Verify the channel:
+conda config --show-sources
+
+text
+→ Check it lists only `https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge`.
+conda info
+
+text
+→ Confirm channel URLs are `https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge/win-64` and `noarch`.
+- **Troubleshooting**:
+- If `.condarc` is missing, create it:
+  ```bash
+  echo default_channels: > %USERPROFILE%\.condarc
+  echo - https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge >> %USERPROFILE%\.condarc
+  type %USERPROFILE%\.condarc
+If other channels appear (e.g., conda-forge), remove them:
+bash
+del C:\path\to\other\.condarc
+Create and Activate Environment:
+Open Miniforge Prompt or Command Prompt.
+Create and activate a Conda environment with Python 3.7:
+bash
+conda create -n calibration_pyqt python=3.7
+conda activate calibration_pyqt
+Ajouter au chat
+
 
 3. **Install Dependencies**:
    - Install PyQt and required packages:
