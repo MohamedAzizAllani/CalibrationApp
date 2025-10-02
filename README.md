@@ -21,8 +21,8 @@ markdown
   - The `.condarc` file, created during Miniforge installation , specifies where Conda downloads packages. Use Infineon's internal server for security.
   - Open Command Prompt as Administrator (Windows Key → type `cmd` → right-click → "Run as administrator").
   - Open `.condarc`:
-  - 
-notepad C:\Users\USERNAME\AppData\Local\miniforge3\.condarc
+   ```bash
+   notepad C:\Users\USERNAME\AppData\Local\miniforge3\.condarc
 
 
 - Ensure it contains only:
