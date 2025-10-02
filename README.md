@@ -8,7 +8,6 @@ To set up the project locally, follow these steps:
    - Extract the ZIP file to your desired directory.
 
 
-markdown
 ### 2. Set Up the Conda Environment
 - **Install Miniforge**:
   - Download the Windows installer for Miniforge from [https://conda-forge.org/download/](https://conda-forge.org/download/).
