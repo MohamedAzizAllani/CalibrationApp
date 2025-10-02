@@ -7,9 +7,7 @@ To set up the project locally, follow these steps:
    - Download the code as a ZIP file from the GitHub repository.
    - Extract the ZIP file to your desired directory.
 
-Réponse A
 
-Réflexion pendant 12s
 markdown
 ### 2. Set Up the Conda Environment
 - **Install Miniforge**:
