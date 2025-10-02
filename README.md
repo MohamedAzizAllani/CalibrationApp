@@ -43,15 +43,7 @@ conda info
 
 
 → Confirm channel URLs are `https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge/win-64` and `noarch`.
-- **Troubleshooting**:
-- If `.condarc` is missing, create it:
-  ```bash
-  echo default_channels: > C:\Users\USERNAME\AppData\Local\miniforge3\.condarc
-  echo - https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge >> C:\Users\USERNAME\AppData\Local\miniforge3\.condarc
-  type C:\Users\USERNAME\AppData\Local\miniforge3\.condarc
-If other channels appear (e.g., conda-forge), remove them:
-bash
-del C:\path\to\other\.condarc
+
 Create and Activate Environment:
 Open Miniforge Prompt or Command Prompt.
 Create and activate a Conda environment with Python 3.7:
