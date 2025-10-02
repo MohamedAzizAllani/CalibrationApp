@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1325</width>
-    <height>813</height>
+    <width>1611</width>
+    <height>806</height>
    </rect>
   </property>
   <property name="maximumSize">
@@ -188,14 +188,15 @@
      <widget class="QLabel" name="dataPathLabel">
       <property name="geometry">
        <rect>
-        <x>670</x>
-        <y>40</y>
+        <x>770</x>
+        <y>30</y>
         <width>741</width>
         <height>20</height>
        </rect>
       </property>
       <property name="font">
        <font>
+        <pointsize>12</pointsize>
         <weight>75</weight>
         <bold>true</bold>
        </font>
@@ -207,8 +208,8 @@
      <widget class="QWidget" name="plotWidget" native="true">
       <property name="geometry">
        <rect>
-        <x>550</x>
-        <y>50</y>
+        <x>690</x>
+        <y>60</y>
         <width>851</width>
         <height>581</height>
        </rect>
@@ -1512,7 +1513,7 @@
       <property name="geometry">
        <rect>
         <x>660</x>
-        <y>680</y>
+        <y>670</y>
         <width>251</width>
         <height>71</height>
        </rect>
@@ -1665,7 +1666,7 @@
         <rect>
          <x>10</x>
          <y>200</y>
-         <width>411</width>
+         <width>341</width>
          <height>21</height>
         </rect>
        </property>
@@ -1686,7 +1687,7 @@
         <rect>
          <x>10</x>
          <y>350</y>
-         <width>411</width>
+         <width>341</width>
          <height>21</height>
         </rect>
        </property>
@@ -1707,7 +1708,7 @@
         <rect>
          <x>10</x>
          <y>410</y>
-         <width>411</width>
+         <width>341</width>
          <height>21</height>
         </rect>
        </property>
@@ -1780,7 +1781,7 @@
         <rect>
          <x>10</x>
          <y>260</y>
-         <width>411</width>
+         <width>341</width>
          <height>21</height>
         </rect>
        </property>
@@ -1793,7 +1794,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Num fitpoints between point 4 and 5 .........................................</string>
+        <string>Num fitpoints between point 4 and 5 .......................................</string>
        </property>
       </widget>
       <widget class="QSlider" name="Num_fitpoints_between_point_1and2_slider">
@@ -1858,7 +1859,7 @@
         <rect>
          <x>10</x>
          <y>320</y>
-         <width>411</width>
+         <width>341</width>
          <height>21</height>
         </rect>
        </property>
@@ -1892,7 +1893,7 @@
         <rect>
          <x>10</x>
          <y>170</y>
-         <width>411</width>
+         <width>341</width>
          <height>21</height>
         </rect>
        </property>
@@ -1934,7 +1935,7 @@
         <rect>
          <x>10</x>
          <y>290</y>
-         <width>411</width>
+         <width>341</width>
          <height>21</height>
         </rect>
        </property>
@@ -2007,7 +2008,7 @@
         <rect>
          <x>10</x>
          <y>380</y>
-         <width>411</width>
+         <width>341</width>
          <height>21</height>
         </rect>
        </property>
@@ -2028,7 +2029,7 @@
         <rect>
          <x>10</x>
          <y>230</y>
-         <width>411</width>
+         <width>341</width>
          <height>21</height>
         </rect>
        </property>
@@ -2184,7 +2185,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1325</width>
+     <width>1611</width>
      <height>22</height>
     </rect>
    </property>

@@ -1986,6 +1986,7 @@ class SelectCalibrationTab:
         self.scale_cal_data = preset["-scale_cal-"]
         self.G_dopant_type = preset["-dopant_type-"]
         self.G_carrier_type = preset["-dopant_type-"]
+        self.G_carrier_typee = "p-type" if preset["-dopant_type-"] == "B" else "n-type"
         self.G_step_distance = preset["-step_distance-"]
         self.G_number_of_steps = preset["-num_steps-"]
 

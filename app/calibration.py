@@ -49,7 +49,7 @@ class calibrationset:
                 dtype=object
             )
             try:
-                database_path = r"C:\Users\allani\Desktop\Internship\Tasks\Task3\LoadNPZ\calibration_database.npz"
+                database_path = r"Z:\2_Reference\calibration_database.npz"
                 lead_num = 0
                 if os.path.exists(database_path):
                     try:
@@ -560,7 +560,7 @@ class CalibrationTab:
 
         db = calibrationset(data_path=data_path, version="v0.3")
         db.Dopant_type = self.select_calibration_tab.G_dopant_type
-        db.carrier_type = self.select_calibration_tab.G_carrier_type
+        db.carrier_type = self.select_calibration_tab.G_carrier_typee
         db.cal_setting = self.select_calibration_tab.G_cal_setting
         db.ref = self.alignment_tab.ref
         db.fill_set(self.alignment_tab.cal_name, quality, X_cal, Y_cal,
@@ -582,10 +582,10 @@ class CalibrationTab:
             try:
                 workbook = load_workbook(filename=self.XLS)
                 sheet = workbook['Generic 10-step staircase']
-
+    
                 for row in range(len(self.fitpoints_dat_opt)):
                     sheet.cell(row=3 + 2 * row, column=4).value = float(self.fitpoints_dat_opt[row])
-
+    
                     if self.main_window.select_calibration_tab.G_cal_setting == 2:
                         if self.calibration_convert_metadata[1] and hasattr(self.main_window.fitpoints_tab, 'Y_plateaus_cal_conv') and self.main_window.fitpoints_tab.Y_plateaus_cal_conv is not None:
                             sheet.cell(row=3 + 2 * row, column=3).value = float(np.power(10., self.main_window.fitpoints_tab.Y_plateaus_cal_conv[row]))
@@ -594,15 +594,20 @@ class CalibrationTab:
                             sheet.cell(row=3 + 2 * row, column=2).value = float(np.power(10., self.main_window.fitpoints_tab.Y_plateaus_cal[row]))
                     else:
                         sheet.cell(row=3 + 2 * row, column=3).value = float(np.power(10., self.main_window.fitpoints_tab.Y_plateaus_cal[row]))
-
-                path_xl = r"C:\Users\allani\Desktop\Internship\Tasks\Task3\LoadNPZ\Output.xlsx"
+    
+                data_path = getattr(self.import_measurement_tab, 'path_data', 'unknown_sample')
+                print(f"Using data_path: {data_path}")
+                self.data_path = data_path
+    
+                # Create output Excel file path by replacing extension with .xlsx
+                path_xl = os.path.splitext(data_path)[0] + ".xlsx"
                 workbook.save(filename=path_xl)
                 workbook.close()
-
+    
                 QMessageBox.information(self.main_window, "Success", f"File saved under {path_xl}")
                 self.ui.Create_excel_File_Button.setStyleSheet("background-color: green; color: black;")
                 print(f"Excel file saved: {path_xl}")
-
+    
             except Exception as e:
                 print(f"Error during Excel export: {e}")
                 QMessageBox.critical(self.main_window, "Error", "Failed to export Excel file. Check data and file path.")
@@ -632,7 +637,7 @@ class CalibrationTab:
                 X_cal, Y_cal, X_dat, Y_dat = self.alignment_tab.apply_lin_offset(
                     X_cal, Y_cal, X_dat, Y_dat, self.alignment_tab.best_m, self.alignment_tab.best_t
                 )
-
+    
                 fig_png = Figure(figsize=1.5 * self.G_canvas_aspect_ratio / self.G_canvas_dpi, dpi=self.G_canvas_dpi)
                 ax = fig_png.add_subplot(111)
                 ax.plot(np.power(10., self.fitpoints_dat_opt), np.power(10., self.fitpoints_tab.Y_plateaus_cal),
@@ -642,14 +647,16 @@ class CalibrationTab:
                 self.draw_ylabel(Quantity="Calibration", is_log=not self.main_window.select_calibration_tab.scale_cal_data, figure=fig_png)
                 ax.legend(loc='best', fontsize=10)
                 fig_png.tight_layout()
-
-                path_save_png = r"C:\Users\allani\Desktop\Internship\Tasks\Task3\LoadNPZ\calibration_curve.png"
+    
+                data_path = getattr(self.import_measurement_tab, 'path_data', 'unknown_sample')
+                print(f"Using data_path: {data_path}")
+                path_save_png = os.path.splitext(data_path)[0] + " - calibration_curve.png"
                 fig_png.savefig(path_save_png, dpi=self.G_canvas_dpi)
                 print(f"PNG saved: {path_save_png}")
-
+    
                 QMessageBox.information(self.main_window, "Success", f"Saved file as {path_save_png}")
                 self.ui.Save_As_Png_Button.setStyleSheet("background-color: green; color: black;")
-
+    
             except Exception as e:
                 print(f"Error during PNG export: {e}")
                 QMessageBox.critical(self.main_window, "Error", "Failed to save PNG. Check data and file path.")
