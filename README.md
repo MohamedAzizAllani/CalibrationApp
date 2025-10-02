@@ -44,14 +44,14 @@ conda info
 
 → Confirm channel URLs are `https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge/win-64` and `noarch`.
 
-Create and Activate Environment:
+- Create and Activate Environment:
 Open Miniforge Prompt or Command Prompt.
-Create and activate a Conda environment with Python 3.7:
-bash
+
+```bash
 conda create -n calibration_pyqt python=3.7
 conda activate calibration_pyqt
-Ajouter au chat
 
+```
 
 3. **Install Dependencies**:
    - Install PyQt and required packages:
