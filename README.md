@@ -18,10 +18,11 @@ markdown
   - For detailed guidance, refer to [Conda-Forge Setup](https://confluencewikiprod.intra.infineon.com/spaces/ANACONDA/pages/1813645274/Conda-Forge).
 
 - **Set Up the Conda Channel**:
-  - The `.condarc` file, created during Miniforge installation or by running `conda config`, specifies where Conda downloads packages. Use Infineon's internal server for security.
+  - The `.condarc` file, created during Miniforge installation , specifies where Conda downloads packages. Use Infineon's internal server for security.
   - Open Command Prompt as Administrator (Windows Key → type `cmd` → right-click → "Run as administrator").
   - Open `.condarc`:
-notepad C:\Users\USERNAME.condarc
+  - 
+notepad C:\Users\USERNAME\AppData\Local\miniforge3\.condarc
 
 
 - Ensure it contains only:
@@ -31,6 +32,7 @@ https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge
 
 
 - Save and close Notepad.
+  
 - Verify the channel:
 conda config --show-sources
 
