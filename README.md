@@ -29,12 +29,12 @@ notepad C:\Users\USERNAME.condarc
 channels:
 https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge
 
-text
+
 - Save and close Notepad.
 - Verify the channel:
 conda config --show-sources
 
-text
+
 → Check it lists only `https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge`.
 conda info
 
@@ -43,9 +43,9 @@ text
 - **Troubleshooting**:
 - If `.condarc` is missing, create it:
   ```bash
-  echo default_channels: > %USERPROFILE%\.condarc
-  echo - https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge >> %USERPROFILE%\.condarc
-  type %USERPROFILE%\.condarc
+  echo default_channels: > C:\Users\USERNAME\AppData\Local\miniforge3\.condarc
+  echo - https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge >> C:\Users\USERNAME\AppData\Local\miniforge3\.condarc
+  type C:\Users\USERNAME\AppData\Local\miniforge3\.condarc
 If other channels appear (e.g., conda-forge), remove them:
 bash
 del C:\path\to\other\.condarc
