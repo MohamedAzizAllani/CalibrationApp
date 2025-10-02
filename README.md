@@ -26,7 +26,8 @@ notepad C:\Users\USERNAME\AppData\Local\miniforge3\.condarc
 
 
 - Ensure it contains only:
-  
+
+    ```bash
 channels:
 https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge
 
