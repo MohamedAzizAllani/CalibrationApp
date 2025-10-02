@@ -23,11 +23,12 @@ markdown
   - Open `.condarc`:
 notepad C:\Users\USERNAME.condarc
 
-text
-- Ensure it contains only:
-channels:
 
+- Ensure it contains only:
+  
+channels:
 https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge
+
 text
 - Save and close Notepad.
 - Verify the channel:
