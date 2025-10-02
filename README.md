@@ -27,9 +27,9 @@ notepad C:\Users\USERNAME\AppData\Local\miniforge3\.condarc
 
 - Ensure it contains only:
 
-    ```bash
-channels:
-https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge
+   ```bash
+   channels:
+   https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge
 
 
 - Save and close Notepad.
@@ -37,11 +37,11 @@ https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge
 - Verify the channel:
 conda config --show-sources
 
-
 → Check it lists only `https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge`.
+
 conda info
 
-text
+
 → Confirm channel URLs are `https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge/win-64` and `noarch`.
 - **Troubleshooting**:
 - If `.condarc` is missing, create it:
