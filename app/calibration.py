@@ -20,12 +20,12 @@ from gwyfile.objects import GwyContainer, GwySIUnit
 
 
 class calibrationset:
-    def __init__(self, data_path, version='v0.3'):
+    def __init__(self, data_path, version='v0.5'):
         now = datetime.now()
         self.ident = now.strftime("%d/%m/%Y %H:%M") + "F" + data_path
         self.version = version
 
-    def fill_set_v03(self, cal_name, quality, X_cal, Y_cal, initialguess, res, cc, meas):
+    def fill_set_v05(self, cal_name, quality, X_cal, Y_cal, initialguess, res, cc, meas):
         self.sample = cal_name
         self.Dopant = self.Dopant_type
         self.carrier = self.carrier_type
@@ -38,11 +38,11 @@ class calibrationset:
         self.meas = meas
 
     def fill_set(self, *args):
-        if self.version == "v0.3":
-            self.fill_set_v03(*args)
+        if self.version == "v0.5":
+            self.fill_set_v05(*args)
 
     def save_to_database(self):
-        if self.version == "v0.3":
+        if self.version == "v0.5":
             package = np.array(
                 [self.sample, self.Dopant, self.carrier, self.setting, self.dat,
                  self.quality, self.initialguess, self.res, self.cc, self.meas, self.version],
@@ -545,7 +545,7 @@ class CalibrationTab:
             cc = self.fitpoints_tab.Y_plateaus_cal
         elif self.select_calibration_tab.G_cal_setting == 2:
             res = self.fitpoints_tab.Y_plateaus_cal
-            cc = self.Y_plateaus_cal_conv if hasattr(self, 'Y_plateaus_cal_conv') else None
+            cc = self.fitpoints_tab.Y_plateaus_cal_conv if hasattr(self.fitpoints_tab, 'Y_plateaus_cal_conv') else None  # This used to falsly call self.Y_cal_conv
         elif self.select_calibration_tab.G_cal_setting == 3:
             res = self.fitpoints_tab.Y_plateaus_cal
             cc = None
@@ -558,7 +558,7 @@ class CalibrationTab:
         print(f"Using data_path: {data_path}")
         self.data_path = data_path
 
-        db = calibrationset(data_path=data_path, version="v0.3")
+        db = calibrationset(data_path=data_path, version="v0.5")
         db.Dopant_type = self.select_calibration_tab.G_dopant_type
         db.carrier_type = self.select_calibration_tab.G_carrier_typee
         db.cal_setting = self.select_calibration_tab.G_cal_setting
