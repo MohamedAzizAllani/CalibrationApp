@@ -111,6 +111,11 @@ To customize the GUI, you can edit the `main_window.ui` file using Qt Designer:
      ```
      C:\Users\USERNAME\.conda\envs\calibration_pyqt\Library\bin\designer.exe
      ```
+     Comment from Thomas: For me it was 
+     ```
+     C:\Users\USERNAME\AppData\Local\miniforge3\envs\calibration
+     ```
+   
      Replace `USERNAME` with your Windows username.
    - Run `designer.exe` to open Qt Designer.
 
