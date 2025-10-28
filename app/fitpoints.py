@@ -86,7 +86,7 @@ class FitpointsTab:
             self.ui.Min_distance_between_steps_lineEdit.textChanged.connect(self.update_fit_min_dist)
             self.ui.include_left_edge_as_anchor_checkBox.stateChanged.connect(self.update_include_left)
             self.ui.include_right_edge_as_anchor_checkBox.stateChanged.connect(self.update_include_right)
-            self.select_calibration_tab.ui.calib_sample_combobox.currentTextChanged.connect(self.update_from_preset)
+            #self.select_calibration_tab.ui.calib_sample_combobox.currentTextChanged.connect(self.update_from_preset)
             print("SpinBox, LineEdit, CheckBox, and Combobox signals connected")
         except AttributeError as e:
             print(f"Error: {e}. Ensure UI elements exist.")
@@ -120,7 +120,7 @@ class FitpointsTab:
         # Initial UI state
         # ---------------------------------------------------------------------
         self.set_auto_mode()
-        self.update_from_preset(self.select_calibration_tab.ui.calib_sample_combobox.currentText())
+        #self.update_from_preset(self.select_calibration_tab.ui.calib_sample_combobox.currentText())
 
     # =========================================================================
     # Public small helpers

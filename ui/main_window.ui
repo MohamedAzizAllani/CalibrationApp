@@ -26,14 +26,14 @@
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>0</y>
+      <x>20</x>
+      <y>20</y>
       <width>1611</width>
       <height>811</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>3</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="importMeasurementTab">
      <attribute name="title">
@@ -1445,6 +1445,19 @@
        <string/>
       </property>
      </widget>
+     <widget class="QCheckBox" name="checkBox">
+      <property name="geometry">
+       <rect>
+        <x>420</x>
+        <y>100</y>
+        <width>111</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>wrap data to cal?</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="Fitpoints_tab">
      <attribute name="title">
@@ -2186,7 +2199,7 @@
      <x>0</x>
      <y>0</y>
      <width>1611</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

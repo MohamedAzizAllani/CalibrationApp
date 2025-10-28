@@ -5094,7 +5094,7 @@ preset_lib = {
             "-cal_setting-":1,
             "-dopant_type-":"As",
             "-num_steps-":10,
-            "-step_distance-":0.2,
+            "-step_distance-":3.5,
             "-stretch-":[-5,5],
             "-fitpoints-":[0,0,0,0],
             '-scale_cal-':False
@@ -5372,7 +5372,7 @@ class SelectCalibrationTab:
             else:
                 data = data_lib[sample]["data_cc"]
 
-            X = data[:, 0] ## here the *1E6 had to be removed
+            X = data[:, 0] ## here the *1E6 had to be removed- removed it as well in several other positions throughout code
             X = X - np.min(X)
             Y = data[:, 1]
             X_range = np.abs(X[-1] - X[0])
@@ -5386,8 +5386,8 @@ class SelectCalibrationTab:
             self.X_data = X
             self.Y_data = Y
             self.X_data_range = X.copy()
-            self.borders_data = [X[0], X[-1]]
-            self.original_borders_data = self.borders_data.copy()
+            self.borders_data = [X[0], X[-1]]    # list containing the current left and right borders
+            self.original_borders_data = self.borders_data.copy() # list containing the maximum left and right borders
 
         self.ui.Flip_Data_Checkbox.setChecked(self.data_is_flipped)
         self.ui.Calib_Data_Type_comboBox.setCurrentText(
@@ -5459,7 +5459,7 @@ class SelectCalibrationTab:
     # Sliders / borders
     # ------------------------------------------------------------------
 
-    def update_slider_label_position(self, slider, label, value):
+    def update_slider_label_position(self, slider, label, value): # this function moves the position of sliderlabel with the slider together
         min_val = slider.minimum()
         max_val = slider.maximum()
         slider_width = slider.width()
@@ -5472,13 +5472,14 @@ class SelectCalibrationTab:
     def change_left_border(self, value):
         if self.X_data.size > 0:
             min_val = min(self.X_data)
-            left_border = min_val + value * 0.01
-            self.borders_data[0] = left_border
+            print(value)
+            left_border = min_val + value * 0.01 # convert slider value to border value [µm]
+            self.borders_data[0] = left_border # save the new value of the left border to the varible
             if not self.data_is_flipped:
                 self.original_borders_data[0] = self.borders_data[0]
-            self.ui.rightMinLabel_2.setText(f"{self.borders_data[0] :.3f} µm")
-            self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0] :.3f}")
-            self.update_slider_label_position(self.ui.leftBorderSlider_2, self.ui.leftSliderValueLabel_2, value)
+            self.ui.rightMinLabel_2.setText(f"{self.borders_data[0] :.2f} µm") # update min/max label of other slider
+            self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0] :.2f}") # update label of this slider
+            self.update_slider_label_position(self.ui.leftBorderSlider_2, self.ui.leftSliderValueLabel_2, value) # update position of label
             self.main_window.alignment_tab.reset_calibration_state()
             self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
 
@@ -5487,13 +5488,20 @@ class SelectCalibrationTab:
             min_val = min(self.X_data)
             right_border = min_val + value * 0.01
             self.borders_data[1] = right_border
+            self.update_slider_borders()
             if not self.data_is_flipped:
                 self.original_borders_data[1] = self.borders_data[1]
             self.main_window.alignment_tab.reset_calibration_state()
-            self.ui.leftMaxLabel_2.setText(f"{self.borders_data[1] :.3f} µm")
-            self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1] :.3f}")
+            self.ui.leftMaxLabel_2.setText(f"{self.borders_data[1] :.2f} µm")
+            self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1] :.2f}")
             self.update_slider_label_position(self.ui.rightBorderSlider_2, self.ui.rightSliderValueLabel_2, value)
             self.ui.apply_parameters_calib_tab_Button.setEnabled(True)
+
+    def update_slider_borders(self):
+        self.ui.leftBorderSlider_2.setMaximum(int((self.borders_data[1] - min(self.X_data)) / 0.01)) # changed from 0
+        self.ui.rightBorderSlider_2.setMinimum(int((self.borders_data[0] - min(self.X_data)) / 0.01))  # changed from 0
+
+
 
     def update_number_of_steps(self, value):
         self.G_number_of_steps = max(1, int(value))
@@ -5529,29 +5537,27 @@ class SelectCalibrationTab:
             print(f"min val {min_val}")
 
             self.ui.leftBorderSlider_2.setMinimum(0)
-            print(f"Setting left border okay")
-            self.ui.leftBorderSlider_2.setMaximum(slider_steps)
-            print(f"Setting right border okay")
+            self.ui.leftBorderSlider_2.setMaximum(int((self.borders_data[1] - min_val) / 0.01)) # changed from 0
             self.ui.leftBorderSlider_2.setSingleStep(1)
             self.ui.leftBorderSlider_2.setPageStep(10)
-            self.ui.leftBorderSlider_2.setValue(int((self.borders_data[0] - min_val) / 0.01))
+            self.ui.leftBorderSlider_2.setValue(int((self.borders_data[0] - min_val) / 0.01))  # set slider position to left border 
             # self.ui.leftBorderSlider_2.setTickPosition(QSlider.TicksBothSides)
             # self.ui.leftBorderSlider_2.setTickInterval(slider_steps // 10)
 
-            self.ui.rightBorderSlider_2.setMinimum(0)
+            self.ui.rightBorderSlider_2.setMinimum(int((self.borders_data[0] - min_val) / 0.01))  # changed from 0
             self.ui.rightBorderSlider_2.setMaximum(slider_steps)
             self.ui.rightBorderSlider_2.setSingleStep(1)
             self.ui.rightBorderSlider_2.setPageStep(10)
-            self.ui.rightBorderSlider_2.setValue(int((self.borders_data[1] - min_val) / 0.01))
+            self.ui.rightBorderSlider_2.setValue(int((self.borders_data[1] - min_val) / 0.01)) # set slider position to right border
             # self.ui.rightBorderSlider_2.setTickPosition(QSlider.TicksBothSides)
             # self.ui.rightBorderSlider_2.setTickInterval(slider_steps // 10)
 
-            self.ui.leftMinLabel_2.setText(f"{min_val:.3f} µm")
-            self.ui.leftMaxLabel_2.setText(f"{max_val:.3f} µm")
-            self.ui.rightMinLabel_2.setText(f"{min_val:.3f} µm")
-            self.ui.rightMaxLabel_2.setText(f"{max_val:.3f} µm")
-            self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0]:.3f}")
-            self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1]:.3f}")
+            self.ui.leftMinLabel_2.setText(f"{min_val:.2f} µm")
+            self.ui.leftMaxLabel_2.setText(f"{max_val:.2f} µm")
+            self.ui.rightMinLabel_2.setText(f"{min_val:.2f} µm")
+            self.ui.rightMaxLabel_2.setText(f"{max_val:.2f} µm")
+            self.ui.leftSliderValueLabel_2.setText(f"{self.borders_data[0]:.2f}")
+            self.ui.rightSliderValueLabel_2.setText(f"{self.borders_data[1]:.2f}")
 
             self.update_slider_label_position(
                 self.ui.leftBorderSlider_2,
