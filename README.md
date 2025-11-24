@@ -26,7 +26,8 @@ To set up the project locally, follow these steps:
 
    ```bash
    channels:
-   https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge
+  - https://artifactory.intra.infineon.com/artifactory/conda-it-conda-forge
+
 
 
 - Save and close Notepad.
