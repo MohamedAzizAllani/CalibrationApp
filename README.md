@@ -13,8 +13,7 @@ To set up the project locally, follow these steps:
   - Download the Windows installer for Miniforge from [https://conda-forge.org/download/](https://conda-forge.org/download/).
   - **Check Installation Path**: If you didn't change the default path, Miniforge installs to `C:\Users\USERNAME\AppData\Local\miniforge3`. To open Miniforge, navigate to this folder and run `Miniforge3 Prompt` or `scripts\activate.bat` in Command Prompt.
   - **Important**: Add Miniforge to the PATH Environment Variable
-![Uploading slected_Options.png…]()
-
+![Miniforge Installation Options](./images/selected_Options.png)
   
 
 - **Set Up the Conda Channel**:
