@@ -16,7 +16,7 @@ To set up the project locally, follow these steps:
      <img width="456" height="273" alt="Image" src="https://github.com/user-attachments/assets/17b306fd-c64e-4578-86a5-fedc19bdea5e" />
      
   - **Check Installation Path**: If you didn't change the default path, Miniforge installs to `C:\Users\USERNAME\AppData\Local\miniforge3`.
-  - **To Open Miniforge**: You can simply go to the **search bar on the taskbar**, type `Miniforge Prompt`, and select it
+
  
 
 - **Set Up the Conda Channel**:
