@@ -11,10 +11,13 @@ To set up the project locally, follow these steps:
 ### 2. Set Up the Conda Environment
 - **Install Miniforge**:
   - Download the Windows installer for Miniforge from [https://conda-forge.org/download/](https://conda-forge.org/download/).
-  - **Check Installation Path**: If you didn't change the default path, Miniforge installs to `C:\Users\USERNAME\AppData\Local\miniforge3`. To open Miniforge, navigate to this folder and run `Miniforge3 Prompt` or `scripts\activate.bat` in Command Prompt.
-  - **Important**: Add Miniforge to the PATH Environment Variable
+  -  - **Important**: Add Miniforge to the PATH Environment Variable
    
-     <img width="456" height="273" alt="Image" src="https://github.com/user-attachments/assets/17b306fd-c64e-4578-86a5-fedc19bdea5e" />  
+     <img width="456" height="273" alt="Image" src="https://github.com/user-attachments/assets/17b306fd-c64e-4578-86a5-fedc19bdea5e" />
+     
+  - **Check Installation Path**: If you didn't change the default path, Miniforge installs to `C:\Users\USERNAME\AppData\Local\miniforge3`.
+  - **To Open Miniforge**: You can simply go to the **search bar on the taskbar**, type `Miniforge Prompt`, and select it
+ 
 
 - **Set Up the Conda Channel**:
   - The `.condarc` file, created during Miniforge installation , specifies where Conda downloads packages. Use Infineon's internal server for security.
