@@ -13,7 +13,7 @@ class ImportParametersDialog(QDialog):
         super().__init__(main_window)
         self.main_window = main_window
         self.setWindowTitle("Import Parameters")
-        self.setMinimumSize(900, 500)
+        self.setMinimumSize(1150, 500)
 
         self.project_dir = os.path.expanduser("~/AppName/saved_projects")
         os.makedirs(self.project_dir, exist_ok=True)
@@ -34,11 +34,23 @@ class ImportParametersDialog(QDialog):
         self.table.setHorizontalHeaderLabels([
             "Project Name", "Date", "Measurement File", "Calibration Sample", "Actions"
         ])
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        
+        # All columns fixed narrow width + no stretch
+        for col in range(5):
+            self.table.setColumnWidth(col, 180)  # same width for all
+        
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)  # lock all widths
+        
+        # Special for Measurement File (col 2): allow horizontal scroll
+        self.table.setColumnWidth(2, 180)  # narrow
+        self.table.setWordWrap(False)
+        self.table.setHorizontalScrollMode(QTableWidget.ScrollPerPixel)
+        self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         layout.addWidget(self.table)
-        
+
 
         # Refresh button
         #btn_layout = QHBoxLayout()
@@ -74,7 +86,10 @@ class ImportParametersDialog(QDialog):
 
                 # Measurement Path
                 meas_path = data.get("import_measurement", {}).get("measurement_file", "—")
-                self.table.setItem(row, 2, QTableWidgetItem(meas_path))
+                item = QTableWidgetItem(meas_path)
+                item.setToolTip(meas_path)  # full path on hover
+                self.table.setItem(row, 2, item)
+                
 
                 # Calibration Sample
                 sample = data.get("select_calibration", {}).get("Calibration sample", "—")
