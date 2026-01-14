@@ -17,15 +17,16 @@ import os
 from openpyxl import load_workbook
 import gwyfile
 from gwyfile.objects import GwyContainer, GwySIUnit
+import json
 
 
 class calibrationset:
-    def __init__(self, data_path, version='v0.3'):
+    def __init__(self, data_path, version='v0.5'):
         now = datetime.now()
         self.ident = now.strftime("%d/%m/%Y %H:%M") + "F" + data_path
         self.version = version
 
-    def fill_set_v03(self, cal_name, quality, X_cal, Y_cal, initialguess, res, cc, meas):
+    def fill_set_v05(self, cal_name, quality, X_cal, Y_cal, initialguess, res, cc, meas):
         self.sample = cal_name
         self.Dopant = self.Dopant_type
         self.carrier = self.carrier_type
@@ -38,11 +39,11 @@ class calibrationset:
         self.meas = meas
 
     def fill_set(self, *args):
-        if self.version == "v0.3":
-            self.fill_set_v03(*args)
+        if self.version == "v0.5":
+            self.fill_set_v05(*args)
 
     def save_to_database(self):
-        if self.version == "v0.3":
+        if self.version == "v0.5":
             package = np.array(
                 [self.sample, self.Dopant, self.carrier, self.setting, self.dat,
                  self.quality, self.initialguess, self.res, self.cc, self.meas, self.version],
@@ -67,7 +68,84 @@ class calibrationset:
             except Exception as e:
                 print(f"Error saving to database: {e}")
 
+def save_measurement_settings_to_json(main_window):
+    """Save parameters with user-chosen name (or default timestamp)."""
 
+    project_dir = os.path.expanduser("~/AppName/saved_projects")
+    os.makedirs(project_dir, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    default_name = f"project_{timestamp}"
+
+    file_path, _ = QFileDialog.getSaveFileName(
+        main_window,
+        "Save Project Parameters",
+        os.path.join(project_dir, default_name),
+        "JSON Files (*.json);;All Files (*)"
+    )
+    if not file_path:
+        return  # cancelled
+
+    # Ensure .json extension
+    if not file_path.lower().endswith(".json"):
+        file_path += ".json"
+
+    meas = main_window.import_measurement_tab
+    calib = main_window.select_calibration_tab
+    align = main_window.alignment_tab
+    fit = main_window.fitpoints_tab
+
+    settings = {
+        "project_saved_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "import_measurement": {
+            "data_type": meas.ui.dataTypeComboBox.currentText(),
+            "measurement_file": getattr(meas, "path_data", "") or "",
+            "denomination": meas.ui.denominationLineEdit.text(),
+            "flip_data": meas.ui.flipDataCheckBox.isChecked(),
+            "left_border_um": float(meas.borders_data[0]),
+            "right_border_um": float(meas.borders_data[1]),
+        },
+        "select_calibration": {
+            "Calibration sample": calib.ui.calib_sample_combobox.currentText(),
+            "preset": calib.ui.Preset_comboBox.currentText() if not calib.ui.Preset_comboBox.isHidden() else "",
+            "linear_scale": calib.ui.RawData_LinearScale_checkBox.isChecked(),
+            "data_type": calib.ui.Calib_Data_Type_comboBox.currentText() if calib.ui.Calib_Data_Type_comboBox.isVisible() else "",
+            "flip_calibration": calib.ui.Flip_Data_Checkbox.isChecked(),
+            "left_border_um": float(calib.borders_data[0]),
+            "right_border_um": float(calib.borders_data[1]),
+            "denomination": calib.ui.Calib_Data_Denom_lineEdit.text(),
+            "dopant_type": calib.ui.Dopant_Type_comboBox.currentText(),
+            "number_of_steps": calib.ui.Nb_steps_spinBox.value(),
+            "min_step_distance": float(calib.ui.Min_Step_LineEdit.text() or 0),
+        },
+        "alignment": {
+            "filter_strength": align.ui.DataFilterStrenght_slider.value(),
+            "filter_order": align.ui.FilterOrder_Slider.value(),
+            "min_stretch": align.ui.minStretch_slider.value(),
+            "max_stretch": align.ui.MaxStretch_slider.value(),
+            "increase_search_area": align.ui.Increase_Search_area_checkbox.isChecked(),
+            "shift_resolution": align.ui.Search_resol_shift_lineedit.text(),
+            "stretch_resolution": align.ui.Search_resol_Stretch_lineedit.text(),
+            "fine-alignment_number_of_evaluated_points": align.ui.fine_alignement_lineedit.text(),
+        },
+        "fitpoints": {
+            "mode": fit.G_fit_Mode,
+            "number_of_points": fit.ui.Nbr_of_points_spinBox.value(),
+            "min_distance": float(fit.ui.Min_distance_between_steps_lineEdit.text() or 0),
+            "include_left_edge": fit.ui.include_left_edge_as_anchor_checkBox.isChecked(),
+            "include_right_edge": fit.ui.include_right_edge_as_anchor_checkBox.isChecked(),
+            "intermediate_points": [s.value() for s in fit.sliders],
+        }
+    }
+
+    try:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(settings, f, indent=4)
+        print(f"Saved: {file_path}")
+        QMessageBox.information(main_window, "Success", f"Saved:\n{os.path.basename(file_path)}")
+    except Exception as e:
+        QMessageBox.critical(main_window, "Error", f"Save failed:\n{e}")
+        
 class CalibrationTab:
     """Controller for the 'Calibration' tab functionality."""
 
@@ -470,6 +548,7 @@ class CalibrationTab:
             label="Measurement Data Calibrated with Optimized Calibration Curve", zorder=1
         )
         ax.legend(loc='best', fontsize=10)
+
         self.draw_ylabel(
             Quantity="Calibration",
             is_log=not self.main_window.select_calibration_tab.scale_cal_data,
@@ -519,6 +598,8 @@ class CalibrationTab:
         except AttributeError as e:
             print(f"PyQt - Warning: Export/convert buttons not found - {e}")
 
+
+
     def export_database(self):
         """Save calibration data to database."""
         if not (hasattr(self.fitpoints_tab, 'Y_plateaus_cal') and hasattr(self.fitpoints_tab, 'Y_plateaus_dat') and
@@ -545,7 +626,7 @@ class CalibrationTab:
             cc = self.fitpoints_tab.Y_plateaus_cal
         elif self.select_calibration_tab.G_cal_setting == 2:
             res = self.fitpoints_tab.Y_plateaus_cal
-            cc = self.Y_plateaus_cal_conv if hasattr(self, 'Y_plateaus_cal_conv') else None
+            cc = self.fitpoints_tab.Y_plateaus_cal_conv if hasattr(self.fitpoints_tab, 'Y_plateaus_cal_conv') else None  # This used to falsly call self.Y_cal_conv
         elif self.select_calibration_tab.G_cal_setting == 3:
             res = self.fitpoints_tab.Y_plateaus_cal
             cc = None
@@ -558,7 +639,7 @@ class CalibrationTab:
         print(f"Using data_path: {data_path}")
         self.data_path = data_path
 
-        db = calibrationset(data_path=data_path, version="v0.3")
+        db = calibrationset(data_path=data_path, version="v0.5")
         db.Dopant_type = self.select_calibration_tab.G_dopant_type
         db.carrier_type = self.select_calibration_tab.G_carrier_typee
         db.cal_setting = self.select_calibration_tab.G_cal_setting
@@ -567,12 +648,16 @@ class CalibrationTab:
                     self.fitpoints_tab.initialguess, res, cc, self.fitpoints_dat_opt)
         db.save_to_database()
         print("PyQt - Database saved successfully")
+        save_measurement_settings_to_json(self.main_window)
 
         try:
             self.ui.Save_To_Database_Button.setStyleSheet("background-color: green; color: black")
             print("PyQt - export_database_pushButton updated to green")
         except AttributeError as e:
             print(f"PyQt - Warning: export_database_pushButton not found - {e}")
+    
+
+
 
     def export_excel(self):
         """Export data to Excel file, mimicking PySimpleGUI -export_excel- event."""
@@ -899,3 +984,5 @@ class CalibrationTab:
                 "Yellow: This step has not been done. Green: This step has been done"
             )
             print("Gwyddion file export failed: Missing prerequisites")
+
+

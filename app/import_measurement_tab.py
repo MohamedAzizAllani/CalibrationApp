@@ -6,6 +6,9 @@ from PyQt5.QtCore import Qt, QSettings
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QSlider
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+import json
+from app.import_parameters import ImportParametersDialog
+
 
 
 # --------------------------- Constants & Styles --------------------------- #
@@ -49,6 +52,126 @@ QSlider::handle:horizontal {
     border-radius: 3px;
 }
 """
+def load_project_settings_from_historique(main_window):
+    """Load a saved project JSON and restore all 4 tabs + re-import files."""
+    
+    file_path, _ = QFileDialog.getOpenFileName(
+        main_window,
+        "Load Project Settings (Historique)",
+        "",
+        "JSON Files (*.json);;All Files (*)"
+    )
+    if not file_path:
+        return
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            settings = json.load(f)
+    except Exception as e:
+        QMessageBox.critical(main_window, "Error", f"Cannot read file:\n{e}")
+        return
+
+    meas = main_window.import_measurement_tab
+    calib = main_window.select_calibration_tab
+    align = main_window.alignment_tab
+    fit = main_window.fitpoints_tab
+
+    # === 1. Import Measurement Tab ========================================
+    imp = settings.get("import_measurement", {})
+  #  meas_file = settings.get("measurement_file")
+#
+  #  if meas_file and os.path.exists(meas_file):
+  #      meas.import_data(meas_file)  # This auto-loads + plots + sets borders
+  #  else:
+  #      QMessageBox.warning(main_window, "File Not Found", 
+  #                          f"Measurement file not found:\n{meas_file}\nOnly parameters will be loaded.")
+
+    # Apply saved UI settings (in case file missing or after import)
+    meas.ui.dataTypeComboBox.setCurrentText(imp.get("data_type", "SSRM"))
+    meas.ui.denominationLineEdit.setText(imp.get("denomination", ""))
+    meas.ui.flipDataCheckBox.setChecked(imp.get("flip_data", False))
+
+    # Force borders and flip state
+    left = imp.get("left_border_um", 0)
+    right = imp.get("right_border_um", 0)
+    if meas.X_data.size > 0:
+        meas.borders_data = [left, right]
+        meas.original_borders_data = [left, right]
+        meas.data_is_flipped = imp.get("flip_data", False)
+        meas.ui.flipDataCheckBox.setChecked(meas.data_is_flipped)
+        meas.reset_data_window()
+        #meas.redraw_data_preview()
+
+    # === 2. Select Calibration Tab ========================================
+    cal = settings.get("select_calibration", {})
+    sample_name = cal.get("Calibration sample", "pcal")
+
+    # Set sample and trigger preset loading
+    calib.ui.calib_sample_combobox.setCurrentText(sample_name)
+    calib.update_calibration_sample(sample_name)  # critical: loads preset
+
+    # If "Own Sample", load custom file
+ #   own_file = cal.get("Own Calibration Sample", "")
+ #   if sample_name == "Own Sample" and own_file and os.path.exists(own_file):
+ #       calib.calibration_file = own_file
+ #       calib.ui.calibration_data_lineEdit.setText(own_file)
+ #       calib.import_data(own_file)
+
+    # Apply preset (for built-in samples)
+    preset = cal.get("preset", "")
+    if preset and not calib.ui.Preset_comboBox.isHidden():
+        calib.ui.Preset_comboBox.setCurrentText(preset)
+        calib.update_preset_from_combo(preset)
+
+    # Apply manual settings
+    calib.ui.Flip_Data_Checkbox.setChecked(cal.get("flip_calibration", False))
+    calib.ui.RawData_LinearScale_checkBox.setChecked(cal.get("linear_scale", False))
+    calib.ui.Dopant_Type_comboBox.setCurrentText(cal.get("dopant_type", "B"))
+    calib.ui.Nb_steps_spinBox.setValue(cal.get("number_of_steps", 5))
+    calib.ui.Min_Step_LineEdit.setText(str(cal.get("min_step_distance", 0.3)))
+
+    # Borders
+    calib.borders_data = [cal.get("left_border_um", 0), cal.get("right_border_um", 0)]
+    calib.original_borders_data = calib.borders_data.copy()
+    calib.data_is_flipped = cal.get("flip_calibration", False)
+    calib.reset_data_window()
+    calib.redraw_data_preview()
+
+    # === 3. Alignment Tab =================================================
+    alg = settings.get("alignment", {})
+    align.ui.DataFilterStrenght_slider.setValue(alg.get("filter_strength", 3))
+    align.ui.FilterOrder_Slider.setValue(alg.get("filter_order", 1))
+    align.ui.minStretch_slider.setValue(alg.get("min_stretch", -5))
+    align.ui.MaxStretch_slider.setValue(alg.get("max_stretch", 5))
+    align.ui.Increase_Search_area_checkbox.setChecked(alg.get("increase_search_area", False))
+    align.ui.Search_resol_shift_lineedit.setText(str(alg.get("shift_resolution", "1000")))
+    align.ui.Search_resol_Stretch_lineedit.setText(str(alg.get("stretch_resolution", "1000")))
+    align.ui.fine_alignement_lineedit.setText(str(alg.get("fine-alignment_number_of_evaluated_points", "50")))
+
+    # === 4. Fitpoints Tab =================================================
+    fp = settings.get("fitpoints", {})
+    mode = fp.get("mode", "Find fitpoints automatically")
+    if "Manually" in mode:
+        fit.set_manual_mode()
+    else:
+        fit.set_auto_mode()
+
+    fit.ui.Nbr_of_points_spinBox.setValue(fp.get("number_of_points", 5))
+    fit.ui.Min_distance_between_steps_lineEdit.setText(str(fp.get("min_distance", 1.0)))
+    fit.ui.include_left_edge_as_anchor_checkBox.setChecked(fp.get("include_left_edge", False))
+    fit.ui.include_right_edge_as_anchor_checkBox.setChecked(fp.get("include_right_edge", False))
+
+    intermediates = fp.get("intermediate_points", [0]*9)
+    for i, val in enumerate(intermediates[:len(fit.sliders)]):
+        fit.sliders[i].setValue(val)
+
+    # Final feedback
+    QMessageBox.information(main_window, "Success", 
+                            f"Project loaded successfully!\n{os.path.basename(file_path)}")
+    print(f"Project loaded from: {file_path}")
+    
+    
+ #--    --------------------------------------------------
 
 
 class ImportMeasurementTab:
@@ -88,6 +211,11 @@ class ImportMeasurementTab:
         # Settings
         self.settings = QSettings(APP_ORG, APP_NAME)
         self.last_directory: str = self.settings.value("last_directory", "", type=str)
+
+        # Inside ImportMeasurementTab.__init__ or _connect_signals()
+        self.ui.HistoriqueButton.clicked.connect(
+            lambda: ImportParametersDialog(self.main_window).exec_()
+        )
 
         # UI init
         self._init_ui_visibility()
@@ -373,7 +501,7 @@ class ImportMeasurementTab:
         """Apply current parameters and redraw the plot."""
         self.redraw_data_preview()
         self.main_window.alignment_tab.reset_data_state()
-        QMessageBox.information(self.main_window, "Success", "Parameters applied!")
+    #    QMessageBox.information(self.main_window, "Success", "Parameters applied!")
         self.ui.applyParametersButton.setEnabled(False)
 
     def redraw_data_preview(self) -> None:
@@ -438,3 +566,5 @@ class ImportMeasurementTab:
                     self.ui.leftBorderSlider.setValue(self.ui.leftBorderSlider.value() + step)
                 elif self.ui.rightBorderSlider.hasFocus():
                     self.ui.rightBorderSlider.setValue(self.ui.rightBorderSlider.value() + step)
+
+

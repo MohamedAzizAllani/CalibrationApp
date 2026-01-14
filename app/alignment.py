@@ -44,9 +44,9 @@ class AlignmentTab:
         # ---------------------------------------------------------------------
         # Data holders (calibration & measurement)
         # ---------------------------------------------------------------------
-        self.X_c = np.array([])      # Calibration X data (mm)
+        self.X_c = np.array([])      # Calibration X data 
         self.Y_c = np.array([])      # Calibration Y data
-        self.X_data = np.array([])   # Measurement X data (mm)
+        self.X_data = np.array([])   # Measurement X data 
         self.Y_data = np.array([])   # Measurement Y data
 
         self.cal_is_flipped = False
@@ -506,8 +506,8 @@ class AlignmentTab:
         """Set x-axis label."""
         ax = self.figure_fine.gca() if self.figure_fine.axes else self.figure_preview.gca()
         if Quantity == "Depth":
-            ax.set_xlabel("Depth [mm]")
-            # print("X label set to Depth [mm]")
+            ax.set_xlabel("Depth [µm]")
+            
         else:
             label = 'SSRM measured resistance' if self.G_dat_datatype == "SSRM" else self.G_dat_denomination
             if is_log and self.G_dat_datatype == "SSRM":
@@ -564,10 +564,10 @@ class AlignmentTab:
             print("start_alignment_button set to yellow: cal_imported=True, data_imported=True")
         else:
             self.ui.start_alignment_button.setStyleSheet("background-color: red; color: black")
-            print(
-                "start_alignment_button set to red: cal_imported=%s, data_imported=%s, new_cal_data_available=%s, new_meas_data_available=%s"
-                % (self.cal_imported, self.data_imported, self.new_cal_data_available, self.new_meas_data_available)
-            )
+            #print(
+            #    "start_alignment_button set to red: cal_imported=%s, data_imported=%s, new_cal_data_available=%s, new_meas_data_available=%s"
+            #    % (self.cal_imported, self.data_imported, self.new_cal_data_available, self.new_meas_data_available)
+            #)
 
     def start_alignment_clicked(self):
         """Handle start_alignment_button click to set it to green and trigger redraws."""
@@ -593,10 +593,10 @@ class AlignmentTab:
         print("Import_Calib_button clicked")
         select_tab = self.main_window.select_calibration_tab
         if select_tab.X_data.size > 1:
-            self.X_c = select_tab.X_data_range.copy() * 1e-6  # µm to mm
+            self.X_c = select_tab.X_data_range.copy() 
             self.Y_c = select_tab.Y_data.copy()
             self.cal_is_flipped = select_tab.data_is_flipped
-            self.borders_cal = [x * 1e-6 for x in select_tab.borders_data]  # Convert borders to mm
+            self.borders_cal = select_tab.borders_data.copy()  
             self.cal_imported = True
             self.new_cal_data_available = False
             print(
@@ -709,17 +709,22 @@ class AlignmentTab:
         return test_data
 
     def find_step_pos(self, X, Y, Mode="automatic Mode", fixed_filterwidth=None, variable_set="Alignment"):
+        step_dist = self.main_window.select_calibration_tab.G_step_distance
+        step_num = self.main_window.select_calibration_tab.G_number_of_steps
         if variable_set == "Get Fitpoints":
-            step_dist = self.main_window.fitpoints_tab.G_fit_min_dist
-            step_num = self.main_window.fitpoints_tab.G_fit_num - int(self.main_window.fitpoints_tab.fit_includeleft) - int(self.main_window.fitpoints_tab.fit_includeright)
+            #step_dist = self.main_window.fitpoints_tab.G_fit_min_dist
+            step_dist = self.main_window.select_calibration_tab.G_step_distance
+            #step_num = self.main_window.fitpoints_tab.G_fit_num - int(self.main_window.fitpoints_tab.fit_includeleft) - int(self.main_window.fitpoints_tab.fit_includeright)
+            step_num = self.main_window.select_calibration_tab.G_number_of_steps
+            print("Thomas - Get Fitpoints: step_dist=%s, step_num=%s" % (step_dist, step_num))
             if step_num < 1:
                 print("PyQt - Error: step_num < 1 in Get Fitpoints")
                 return None
         else:  # Alignment
             cal_name = self.ui.calib_sample_combobox.currentText()
             preset_key = "Charge carriers -- default" if self.main_window.select_calibration_tab.G_cal_setting == 1 else "Resistivity -- default"
-            step_dist = preset_lib.get(cal_name, {}).get(preset_key, {}).get("-step_distance-")
-            step_num = preset_lib.get(cal_name, {}).get(preset_key, {}).get("-num_steps-")
+            #step_dist = preset_lib.get(cal_name, {}).get(preset_key, {}).get("-step_distance-")   ## wtf 
+            #step_num = preset_lib.get(cal_name, {}).get(preset_key, {}).get("-num_steps-")
 
         if step_dist is None or step_num is None:
             print("PyQt - Error: Missing step_dist or step_num for %s in %s" % (cal_name, preset_key))

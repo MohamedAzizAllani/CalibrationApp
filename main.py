@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5 import uic
 from generated_ui.main_window import Ui_MainWindow
 from app.import_measurement_tab import ImportMeasurementTab
+from app.import_parameters import ImportParametersDialog
 from app.select_calibration_tab import SelectCalibrationTab
 from app.alignment import AlignmentTab
 from app.fitpoints import FitpointsTab
@@ -26,6 +27,7 @@ class MainApp(QMainWindow):
 
         # Initialize tab controllers
         self.import_measurement_tab = ImportMeasurementTab(self.ui, self)
+        self.import_parameters = ImportParametersDialog(self)
         self.select_calibration_tab = SelectCalibrationTab(self.ui, self)
         self.alignment_tab = AlignmentTab(self.ui, self)
         self.fitpoints_tab = FitpointsTab(self.ui, self)
