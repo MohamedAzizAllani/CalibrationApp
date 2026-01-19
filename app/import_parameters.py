@@ -15,7 +15,7 @@ class ImportParametersDialog(QDialog):
         self.setWindowTitle("Import Parameters")
         self.setMinimumSize(1150, 500)
 
-        self.project_dir = os.path.expanduser("~/AppName/saved_projects")
+        self.project_dir = os.path.expanduser("~Z:/2_Reference/Calibration_database_in_Json_Files")
         os.makedirs(self.project_dir, exist_ok=True)
 
         layout = QVBoxLayout()
@@ -82,7 +82,10 @@ class ImportParametersDialog(QDialog):
                 self.table.setItem(row, 0, name_item)
 
                 # Date
-                self.table.setItem(row, 1, QTableWidgetItem(data.get("project_saved_at", "—")))
+                date_str = data.get("project_saved_at", "—")
+                if date_str != "—":
+                    date_str = date_str[:-3]  # remove seconds (:ss)
+                self.table.setItem(row, 1, QTableWidgetItem(date_str))
 
                 # Measurement Path
                 meas_path = data.get("import_measurement", {}).get("measurement_file", "—")

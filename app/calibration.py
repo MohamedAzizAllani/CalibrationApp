@@ -18,6 +18,7 @@ from openpyxl import load_workbook
 import gwyfile
 from gwyfile.objects import GwyContainer, GwySIUnit
 import json
+from pymongo import MongoClient
 
 
 class calibrationset:
@@ -25,6 +26,11 @@ class calibrationset:
         now = datetime.now()
         self.ident = now.strftime("%d/%m/%Y %H:%M") + "F" + data_path
         self.version = version
+        
+        # Local MongoDB (Compass)
+        self.client = MongoClient("mongodb://localhost:27017/")
+        self.db = self.client["calibration_db"]
+        self.collection = self.db["calibrations"]
 
     def fill_set_v05(self, cal_name, quality, X_cal, Y_cal, initialguess, res, cc, meas):
         self.sample = cal_name
@@ -43,6 +49,28 @@ class calibrationset:
             self.fill_set_v05(*args)
 
     def save_to_database(self):
+        data = {
+            "ident": self.ident,
+            "version": self.version,
+            "saved_at": datetime.now().isoformat(),
+            "sample": self.sample,
+            "Dopant": self.Dopant,
+            "carrier": self.carrier,
+            "setting": self.setting,
+            "dat": self.dat.tolist(),           # numpy array → list
+            "quality": self.quality.tolist() if hasattr(self.quality, 'tolist') else self.quality,
+            "initialguess": self.initialguess,
+            "res": self.res,
+            "cc": self.cc,
+            "meas": self.meas
+        }
+        
+        result = self.collection.insert_one(data)
+        print(f"Saved to MongoDB: ID {result.inserted_id}")
+
+
+    def save_to_npz(self):
+        """Legacy NPZ save - keep for compatibility"""
         if self.version == "v0.5":
             package = np.array(
                 [self.sample, self.Dopant, self.carrier, self.setting, self.dat,
@@ -57,36 +85,47 @@ class calibrationset:
                         with np.load(database_path, allow_pickle=True) as loaded_npz:
                             lead_num = len(loaded_npz.files)
                     except Exception as e:
-                        print(f"Warning: Could not read existing database: {e}. Creating new file.")
-                else:
-                    print("Database file does not exist. Creating new file.")
+                        print(f"Warning: Could not read NPZ: {e}")
                 bio = io.BytesIO()
                 np.save(bio, package)
                 with zipfile.ZipFile(database_path, 'a' if os.path.exists(database_path) else 'w') as zipf:
                     zipf.writestr(f"{lead_num}T{self.ident}.npy", data=bio.getbuffer().tobytes())
-                print(f"Successfully saved to {database_path} with identifier {lead_num}T{self.ident}")
+                print(f"Saved to NPZ: {database_path}")
             except Exception as e:
-                print(f"Error saving to database: {e}")
+                print(f"NPZ save failed: {e}")
 
 def save_measurement_settings_to_json(main_window):
     """Save parameters with user-chosen name (or default timestamp)."""
 
-    project_dir = os.path.expanduser("~/AppName/saved_projects")
-    os.makedirs(project_dir, exist_ok=True)
+    reply = QMessageBox.question(
+        main_window,
+        "Save Parameters?",
+        "Do you want to save the project parameters?",
+        QMessageBox.Yes | QMessageBox.No,
+        QMessageBox.No
+    )
+    if reply != QMessageBox.Yes:
+        return  # cancelled
 
+    fixed_dir = r"Z:\2_Reference\Calibration_database_in_Json_Files"
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    default_name = f"project_{timestamp}"
+    default_name = f"project_{timestamp}.json"
 
     file_path, _ = QFileDialog.getSaveFileName(
         main_window,
         "Save Project Parameters",
-        os.path.join(project_dir, default_name),
+        os.path.join(fixed_dir, default_name),
         "JSON Files (*.json);;All Files (*)"
     )
     if not file_path:
-        return  # cancelled
+        return
 
-    # Ensure .json extension
+    # Force save only in fixed_dir
+    if not file_path.startswith(fixed_dir):
+        QMessageBox.warning(main_window, "Invalid Location",
+                            "Save only allowed in:\n" + fixed_dir)
+        return
+
     if not file_path.lower().endswith(".json"):
         file_path += ".json"
 
@@ -109,10 +148,10 @@ def save_measurement_settings_to_json(main_window):
             "Calibration sample": calib.ui.calib_sample_combobox.currentText(),
             "preset": calib.ui.Preset_comboBox.currentText() if not calib.ui.Preset_comboBox.isHidden() else "",
             "linear_scale": calib.ui.RawData_LinearScale_checkBox.isChecked(),
-            "data_type": calib.ui.Calib_Data_Type_comboBox.currentText() if calib.ui.Calib_Data_Type_comboBox.isVisible() else "",
             "flip_calibration": calib.ui.Flip_Data_Checkbox.isChecked(),
             "left_border_um": float(calib.borders_data[0]),
             "right_border_um": float(calib.borders_data[1]),
+            "data_type": calib.ui.Calib_Data_Type_comboBox.currentText() if calib.ui.Calib_Data_Type_comboBox.isVisible() else "",
             "denomination": calib.ui.Calib_Data_Denom_lineEdit.text(),
             "dopant_type": calib.ui.Dopant_Type_comboBox.currentText(),
             "number_of_steps": calib.ui.Nb_steps_spinBox.value(),
@@ -124,8 +163,8 @@ def save_measurement_settings_to_json(main_window):
             "min_stretch": align.ui.minStretch_slider.value(),
             "max_stretch": align.ui.MaxStretch_slider.value(),
             "increase_search_area": align.ui.Increase_Search_area_checkbox.isChecked(),
-            "shift_resolution": align.ui.Search_resol_shift_lineedit.text(),
             "stretch_resolution": align.ui.Search_resol_Stretch_lineedit.text(),
+            "shift_resolution": align.ui.Search_resol_shift_lineedit.text(),
             "fine-alignment_number_of_evaluated_points": align.ui.fine_alignement_lineedit.text(),
         },
         "fitpoints": {
@@ -599,9 +638,8 @@ class CalibrationTab:
             print(f"PyQt - Warning: Export/convert buttons not found - {e}")
 
 
-
     def export_database(self):
-        """Save calibration data to database."""
+        """Save calibration data to BOTH MongoDB and legacy NPZ."""
         if not (hasattr(self.fitpoints_tab, 'Y_plateaus_cal') and hasattr(self.fitpoints_tab, 'Y_plateaus_dat') and
                 hasattr(self.fitpoints_tab, 'initialguess') and hasattr(self, 'fitpoints_dat_opt')):
             QMessageBox.critical(
@@ -610,7 +648,7 @@ class CalibrationTab:
             )
             print("Error: Missing required data for database export")
             return
-
+    
         X_cal, Y_cal = self.alignment_tab.apply_parameters_to_data(
             self.alignment_tab.X_c, self.alignment_tab.Y_c, self.alignment_tab.borders_cal, self.alignment_tab.cal_is_flipped
         )
@@ -620,25 +658,25 @@ class CalibrationTab:
         X_cal, Y_cal, X_dat, Y_dat = self.alignment_tab.apply_lin_offset(
             X_cal, Y_cal, X_dat, Y_dat, self.alignment_tab.best_m, self.alignment_tab.best_t
         )
-
+    
         if self.select_calibration_tab.G_cal_setting == 1:
             res = None
             cc = self.fitpoints_tab.Y_plateaus_cal
         elif self.select_calibration_tab.G_cal_setting == 2:
             res = self.fitpoints_tab.Y_plateaus_cal
-            cc = self.fitpoints_tab.Y_plateaus_cal_conv if hasattr(self.fitpoints_tab, 'Y_plateaus_cal_conv') else None  # This used to falsly call self.Y_cal_conv
+            cc = self.fitpoints_tab.Y_plateaus_cal_conv if hasattr(self.fitpoints_tab, 'Y_plateaus_cal_conv') else None
         elif self.select_calibration_tab.G_cal_setting == 3:
             res = self.fitpoints_tab.Y_plateaus_cal
             cc = None
         else:
             print(f"Error: G_cal_setting={self.select_calibration_tab.G_cal_setting} is invalid")
             return
-
+    
         quality = self.alignment_tab.quality
         data_path = getattr(self.import_measurement_tab, 'path_data', 'unknown_sample')
         print(f"Using data_path: {data_path}")
         self.data_path = data_path
-
+    
         db = calibrationset(data_path=data_path, version="v0.5")
         db.Dopant_type = self.select_calibration_tab.G_dopant_type
         db.carrier_type = self.select_calibration_tab.G_carrier_typee
@@ -646,15 +684,26 @@ class CalibrationTab:
         db.ref = self.alignment_tab.ref
         db.fill_set(self.alignment_tab.cal_name, quality, X_cal, Y_cal,
                     self.fitpoints_tab.initialguess, res, cc, self.fitpoints_dat_opt)
-        db.save_to_database()
-        print("PyQt - Database saved successfully")
+    
+        # Save to BOTH databases
+        db.save_to_database()       # MongoDB
+        db.save_to_npz()            # Legacy NPZ
+    
+        print("PyQt - Database saved successfully (MongoDB + NPZ)")
         save_measurement_settings_to_json(self.main_window)
-
+    
         try:
             self.ui.Save_To_Database_Button.setStyleSheet("background-color: green; color: black")
-            print("PyQt - export_database_pushButton updated to green")
         except AttributeError as e:
-            print(f"PyQt - Warning: export_database_pushButton not found - {e}")
+            print(f"Warning: Save_To_Database_Button not found - {e}")
+        
+            print("PyQt - Database saved successfully")
+            save_measurement_settings_to_json(self.main_window)
+        
+            try:
+                self.ui.Save_To_Database_Button.setStyleSheet("background-color: green; color: black")
+            except AttributeError as e:
+                print(f"Warning: Save_To_Database_Button not found - {e}")
     
 
 
