@@ -65,6 +65,7 @@ conda activate calibration_pyqt
      pip install scipy==1.2.1 matplotlib==3.1.0 gwyfile==0.2.0
      pip install pynverse==0.1.4.4
      pip install openpyxl==2.6.2
+     pip install pymongo
      ```
 
 ## Usage
