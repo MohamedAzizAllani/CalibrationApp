@@ -92,13 +92,15 @@ conda activate calibration_pyqt
      mongod
      ```
 
-4. **Use MongoDB Compass GUI**  
-- Open Compass → Connect with:  
-  `mongodb://localhost:27017`  
-- View database: `calibration_db` → `calibrations` collection.
+4. **Use MongoDB Compass GUI** 
+- Open **MongoDB Compass**
+- Click **New Connection**
+- Paste: `mongodb://localhost:27017`
+- Click **Connect**
+  <img width="300" height="273"  alt="image" src="https://github.com/user-attachments/assets/dc8ca55d-b037-4812-9ac8-221b73664751" />
+- View database: `calibration_db` → `calibrations` collection
 
-<img width="300" height="273"  alt="Step 1" src="https://github.com/user-attachments/assets/dc8ca55d-b037-4812-9ac8-221b73664751" />
-<img width="300" height="273"  alt="Step 2" src="https://github.com/user-attachments/assets/73964afb-4e64-40c6-bed4-18ed751e132d" />
+<img width="300" height="273"  alt="image" src="https://github.com/user-attachments/assets/73964afb-4e64-40c6-bed4-18ed751e132d" />
 
  Restart your computer if PATH changes don't apply immediately.
 
