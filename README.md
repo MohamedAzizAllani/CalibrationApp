@@ -96,8 +96,11 @@ conda activate calibration_pyqt
 - Open **MongoDB Compass**
 - Click **New Connection**
 - Paste: `mongodb://localhost:27017`
+- Add **Database Name**
 - Click **Connect**
+  
   <img width="300" height="273"  alt="image" src="https://github.com/user-attachments/assets/dc8ca55d-b037-4812-9ac8-221b73664751" />
+  
 - View database: `calibration_db` → `calibrations` collection
 
 <img width="300" height="273"  alt="image" src="https://github.com/user-attachments/assets/73964afb-4e64-40c6-bed4-18ed751e132d" />
