@@ -145,6 +145,7 @@ CalibGuiPyQt/
 │    ├── alignment.py              # Alignment algorithms and logic
 │    ├── fitpoints.py              # Fit point selection logic
 │    ├── calibration.py            # Calibration curve generation logic
+│    ├── import_parameters.py            # Project parameters load/save dialog logic
 ```
 
 - **`main.py`**: The main script that initializes and runs the PyQt application, loading the GUI and connecting all tabs.
