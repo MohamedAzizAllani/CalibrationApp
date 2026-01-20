@@ -97,8 +97,8 @@ conda activate calibration_pyqt
   `mongodb://localhost:27017`  
 - View database: `calibration_db` → `calibrations` collection.
 
-<img width="300" height="273"  alt="Step 2" src="[https://github.com/user-attachments/assets/e7543862-ac16-498e-b6f3-28debd817a57](https://github.com/user-attachments/assets/ebcbb12a-3879-444d-96dd-ecee57861688)" />
-<img width="300" height="273"  alt="Step 1" src="https://github.com/user-attachments/assets/73964afb-4e64-40c6-bed4-18ed751e132d" />
+<img width="300" height="273"  alt="Step 1" src="https://github.com/user-attachments/assets/ebcbb12a-3879-444d-96dd-ecee57861688" />
+<img width="300" height="273"  alt="Step 2" src="https://github.com/user-attachments/assets/73964afb-4e64-40c6-bed4-18ed751e132d" />
 
  Restart your computer if PATH changes don't apply immediately.
 
