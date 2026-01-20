@@ -67,6 +67,34 @@ conda activate calibration_pyqt
      pip install openpyxl==2.6.2
      pip install pymongo
      ```
+### 3. Set Up Local MongoDB Database
+
+1. **Install MongoDB Community Server**  
+   - Download the Windows MSI installer from:  
+     https://www.mongodb.com/try/download/community  
+   - Run the installer → Select "Complete" setup → Install.
+
+2. **Add MongoDB to PATH** (if not automatic)  
+   - Search "Environment Variables" in Windows Start menu.  
+   - Edit "Path" under **System variables**.  
+   - Add: `C:\Program Files\MongoDB\Server\8.0\bin` (adjust version if different).  
+   - OK → OK → restart terminal.
+
+3. **Start the MongoDB Server**  
+   Open a terminal/command prompt and run:
+        ```bash
+     mongod
+     ```
+
+4. **Use MongoDB Compass GUI**  
+- Open Compass → Connect with:  
+  `mongodb://localhost:27017`  
+- View database: `calibration_db` → `calibrations` collection.
+
+The app connects automatically to the local database when the server is running. No extra configuration needed. Restart your computer if PATH changes don't apply immediately.
+
+
+
 
 ## Usage
 1. **Run the Application**:
