@@ -1093,6 +1093,8 @@ class AlignmentTab:
         print("Fine alignment results: quality=%.7f, stretch=%.1f%%, shift=%.0fnm" % (quals[i], (self.best_m - 1) * 100, self.best_t * 1000))
 
         self.quality = quals[i]
+        self.stretch_percent = (self.best_m - 1) * 100
+        self.shift_nm = self.best_t * 1000
         self.finealign_profiles_via_spline_matching(X_cal, Y_cal, X_dat, Y_dat, self.best_m, self.best_t, plot=True)
 
         try:

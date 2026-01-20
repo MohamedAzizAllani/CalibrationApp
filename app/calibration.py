@@ -27,7 +27,7 @@ class calibrationset:
         self.ident = now.strftime("%d/%m/%Y %H:%M") + "F" + data_path
         self.version = version
         
-        # Local MongoDB (Compass)
+        #MongoDB
         self.client = MongoClient("mongodb://localhost:27017/")
         self.db = self.client["calibration_db"]
         self.collection = self.db["calibrations"]
@@ -48,52 +48,18 @@ class calibrationset:
         if self.version == "v0.5":
             self.fill_set_v05(*args)
 
-    def save_to_database(self):
-        data = {
-            "ident": self.ident,
-            "version": self.version,
-            "saved_at": datetime.now().isoformat(),
-            "sample": self.sample,
-            "Dopant": self.Dopant,
-            "carrier": self.carrier,
-            "setting": self.setting,
-            "dat": self.dat.tolist(),           # numpy array → list
-            "quality": self.quality.tolist() if hasattr(self.quality, 'tolist') else self.quality,
-            "initialguess": self.initialguess,
-            "res": self.res,
-            "cc": self.cc,
-            "meas": self.meas
-        }
+    def save_to_database(self, settings):
+        data = settings.copy()
+        data["ident"] = self.ident
         
+        # Add calibration-specific values directly
+        data["sample"] = settings["select_calibration"].get("Calibration sample", "")
+        data["dopant_type"] = settings["select_calibration"].get("dopant_type", "")
+        data["carrier_type"] = settings["select_calibration"].get("carrier_type", "")
+        data["cal_setting"] = settings["select_calibration"].get("data_type", "unknown")    
         result = self.collection.insert_one(data)
         print(f"Saved to MongoDB: ID {result.inserted_id}")
-
-
-    def save_to_npz(self):
-        """Legacy NPZ save - keep for compatibility"""
-        if self.version == "v0.5":
-            package = np.array(
-                [self.sample, self.Dopant, self.carrier, self.setting, self.dat,
-                 self.quality, self.initialguess, self.res, self.cc, self.meas, self.version],
-                dtype=object
-            )
-            try:
-                database_path = r"Z:\2_Reference\calibration_database.npz"
-                lead_num = 0
-                if os.path.exists(database_path):
-                    try:
-                        with np.load(database_path, allow_pickle=True) as loaded_npz:
-                            lead_num = len(loaded_npz.files)
-                    except Exception as e:
-                        print(f"Warning: Could not read NPZ: {e}")
-                bio = io.BytesIO()
-                np.save(bio, package)
-                with zipfile.ZipFile(database_path, 'a' if os.path.exists(database_path) else 'w') as zipf:
-                    zipf.writestr(f"{lead_num}T{self.ident}.npy", data=bio.getbuffer().tobytes())
-                print(f"Saved to NPZ: {database_path}")
-            except Exception as e:
-                print(f"NPZ save failed: {e}")
-
+    
 def save_measurement_settings_to_json(main_window):
     """Save parameters with user-chosen name (or default timestamp)."""
 
@@ -639,14 +605,9 @@ class CalibrationTab:
 
 
     def export_database(self):
-        """Save calibration data to BOTH MongoDB and legacy NPZ."""
         if not (hasattr(self.fitpoints_tab, 'Y_plateaus_cal') and hasattr(self.fitpoints_tab, 'Y_plateaus_dat') and
                 hasattr(self.fitpoints_tab, 'initialguess') and hasattr(self, 'fitpoints_dat_opt')):
-            QMessageBox.critical(
-                self.main_window, "Error",
-                "Missing required data for database export. Complete previous steps."
-            )
-            print("Error: Missing required data for database export")
+            QMessageBox.critical(self.main_window, "Error", "Missing required data.")
             return
     
         X_cal, Y_cal = self.alignment_tab.apply_parameters_to_data(
@@ -669,44 +630,75 @@ class CalibrationTab:
             res = self.fitpoints_tab.Y_plateaus_cal
             cc = None
         else:
-            print(f"Error: G_cal_setting={self.select_calibration_tab.G_cal_setting} is invalid")
             return
     
         quality = self.alignment_tab.quality
         data_path = getattr(self.import_measurement_tab, 'path_data', 'unknown_sample')
-        print(f"Using data_path: {data_path}")
-        self.data_path = data_path
     
+        settings = {
+            "project_saved_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "import_measurement": {
+                "data_type": self.import_measurement_tab.ui.dataTypeComboBox.currentText(),
+                "measurement_file": getattr(self.import_measurement_tab, "path_data", "") or "",
+                "denomination": self.import_measurement_tab.ui.denominationLineEdit.text(),
+                "flip_data": self.import_measurement_tab.ui.flipDataCheckBox.isChecked(),
+                "left_border_um": float(self.import_measurement_tab.borders_data[0]),
+                "right_border_um": float(self.import_measurement_tab.borders_data[1]),
+            },
+            "select_calibration": {
+                "Calibration sample": self.select_calibration_tab.ui.calib_sample_combobox.currentText(),
+                "preset": self.select_calibration_tab.ui.Preset_comboBox.currentText() if not self.select_calibration_tab.ui.Preset_comboBox.isHidden() else "",
+                "linear_scale": self.select_calibration_tab.ui.RawData_LinearScale_checkBox.isChecked(),
+                "flip_calibration": self.select_calibration_tab.ui.Flip_Data_Checkbox.isChecked(),
+                "left_border_um": float(self.select_calibration_tab.borders_data[0]),
+                "right_border_um": float(self.select_calibration_tab.borders_data[1]),
+                "data_type": self.select_calibration_tab.ui.Calib_Data_Type_comboBox.currentText() if self.select_calibration_tab.ui.Calib_Data_Type_comboBox.isVisible() else "",
+                "denomination": self.select_calibration_tab.ui.Calib_Data_Denom_lineEdit.text(),
+                "dopant_type": self.select_calibration_tab.ui.Dopant_Type_comboBox.currentText(),
+                "number_of_steps": self.select_calibration_tab.ui.Nb_steps_spinBox.value(),
+                "min_step_distance": float(self.select_calibration_tab.ui.Min_Step_LineEdit.text() or 0),
+            },
+            "alignment": {
+                "filter_strength": self.alignment_tab.ui.DataFilterStrenght_slider.value(),
+                "filter_order": self.alignment_tab.ui.FilterOrder_Slider.value(),
+                "min_stretch": self.alignment_tab.ui.minStretch_slider.value(),
+                "max_stretch": self.alignment_tab.ui.MaxStretch_slider.value(),
+                "increase_search_area": self.alignment_tab.ui.Increase_Search_area_checkbox.isChecked(),
+                "stretch_resolution": self.alignment_tab.ui.Search_resol_Stretch_lineedit.text(),
+                "shift_resolution": self.alignment_tab.ui.Search_resol_shift_lineedit.text(),
+                "fine-alignment_number_of_evaluated_points": self.alignment_tab.ui.fine_alignement_lineedit.text(),
+            },
+            "fitpoints": {
+                "mode": self.fitpoints_tab.G_fit_Mode,
+                "number_of_points": self.fitpoints_tab.ui.Nbr_of_points_spinBox.value(),
+                "min_distance": float(self.fitpoints_tab.ui.Min_distance_between_steps_lineEdit.text() or 0),
+                "include_left_edge": self.fitpoints_tab.ui.include_left_edge_as_anchor_checkBox.isChecked(),
+                "include_right_edge": self.fitpoints_tab.ui.include_right_edge_as_anchor_checkBox.isChecked(),
+                "intermediate_points": [s.value() for s in self.fitpoints_tab.sliders],
+            },
+            "calibration_data": {
+                "dat": np.c_[self.alignment_tab.ref(X_cal), Y_cal].tolist(),
+                "quality": quality.tolist() if hasattr(quality, 'tolist') else quality,
+                "initialguess": self.fitpoints_tab.initialguess,
+                "res": res,
+                "cc": cc,
+                "meas": self.fitpoints_dat_opt
+            }
+        }
+        
+        settings["alignment"]["stretch_percent"] = self.alignment_tab.stretch_percent
+        settings["alignment"]["shift_nm"] = self.alignment_tab.shift_nm
         db = calibrationset(data_path=data_path, version="v0.5")
-        db.Dopant_type = self.select_calibration_tab.G_dopant_type
-        db.carrier_type = self.select_calibration_tab.G_carrier_typee
-        db.cal_setting = self.select_calibration_tab.G_cal_setting
-        db.ref = self.alignment_tab.ref
-        db.fill_set(self.alignment_tab.cal_name, quality, X_cal, Y_cal,
-                    self.fitpoints_tab.initialguess, res, cc, self.fitpoints_dat_opt)
+        db.save_to_database(settings)   # MongoDB
     
-        # Save to BOTH databases
-        db.save_to_database()       # MongoDB
-        db.save_to_npz()            # Legacy NPZ
-    
-        print("PyQt - Database saved successfully (MongoDB + NPZ)")
+        print("Saved (MongoDB + NPZ)")
         save_measurement_settings_to_json(self.main_window)
     
         try:
             self.ui.Save_To_Database_Button.setStyleSheet("background-color: green; color: black")
-        except AttributeError as e:
-            print(f"Warning: Save_To_Database_Button not found - {e}")
+        except AttributeError:
+            pass
         
-            print("PyQt - Database saved successfully")
-            save_measurement_settings_to_json(self.main_window)
-        
-            try:
-                self.ui.Save_To_Database_Button.setStyleSheet("background-color: green; color: black")
-            except AttributeError as e:
-                print(f"Warning: Save_To_Database_Button not found - {e}")
-    
-
-
 
     def export_excel(self):
         """Export data to Excel file, mimicking PySimpleGUI -export_excel- event."""
