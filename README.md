@@ -72,7 +72,11 @@ conda activate calibration_pyqt
 1. **Install MongoDB Community Server**  
    - Download the Windows MSI installer from:  
      https://www.mongodb.com/try/download/community  
-   - Run the installer → Select "Complete" setup → Install.
+   - Run the installer
+<img width="300" alt="Step 1" src="https://github.com/user-attachments/assets/a7ef2545-d56c-4c28-a2d3-6a8cc65a2d0d" />
+<img width="300" alt="Step 2" src="https://github.com/user-attachments/assets/1cc16977-91a3-442a-b384-804c37b7c092" />
+<img width="300" alt="Step 3" src="https://github.com/user-attachments/assets/e7543862-ac16-498e-b6f3-28debd817a57" />
+     
 
 2. **Add MongoDB to PATH** (if not automatic)  
    - Search "Environment Variables" in Windows Start menu.  
