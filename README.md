@@ -97,7 +97,10 @@ conda activate calibration_pyqt
   `mongodb://localhost:27017`  
 - View database: `calibration_db` → `calibrations` collection.
 
-The app connects automatically to the local database when the server is running. No extra configuration needed. Restart your computer if PATH changes don't apply immediately.
+<img width="300" height="273"  alt="Step 1" src="https://github.com/user-attachments/assets/e7543862-ac16-498e-b6f3-28debd817a57" />
+<img width="300" height="273"  alt="Step 2" src="https://github.com/user-attachments/assets/73964afb-4e64-40c6-bed4-18ed751e132d" />
+
+ Restart your computer if PATH changes don't apply immediately.
 
 
 
