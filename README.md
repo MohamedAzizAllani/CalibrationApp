@@ -76,7 +76,7 @@ conda activate calibration_pyqt
 
 2. **Add MongoDB to PATH** (if not automatic)  
    - Search "Environment Variables" in Windows Start menu.  
-   - Edit "Path" under **System variables**.  
+   - Edit "Path" under **User variables**.  
    - Add: `C:\Program Files\MongoDB\Server\8.2\bin` (adjust version if different).  
    - OK → OK → restart terminal.
      
