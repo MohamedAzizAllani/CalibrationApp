@@ -82,7 +82,7 @@ conda activate calibration_pyqt
 
 3. **Start the MongoDB Server**  
    Open a terminal/command prompt and run:
-        ```bash
+    ```bash
      mongod
      ```
 
