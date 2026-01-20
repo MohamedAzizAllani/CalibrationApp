@@ -80,7 +80,7 @@ conda activate calibration_pyqt
    - Add: `C:\Program Files\MongoDB\Server\8.2\bin` (adjust version if different).  
    - OK → OK → restart terminal.
      
-     <img width="826" height="588" alt="Image" src="https://github.com/user-attachments/assets/46e2be2d-a1bf-4f18-ae8f-c35c745b65e3" />
+     <img width="456" height="273" alt="Image" src="https://github.com/user-attachments/assets/46e2be2d-a1bf-4f18-ae8f-c35c745b65e3" />
 
 3. **Start the MongoDB Server**  
    Open a terminal/command prompt and run:
